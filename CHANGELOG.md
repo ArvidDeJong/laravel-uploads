@@ -4,6 +4,8 @@ All notable changes to `darvis/laravel-uploads` are documented here. The format 
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-30
+
 ### Added
 
 - `Darvis\Uploads\Models\Upload`: one row per file with a polymorphic owner, `collection`, `disk`, `path`, `name`, `mime_type`, `size`, `is_public`, `sort_order`, `meta` (JSON), `conversions` (JSON) and `processed_at`, with soft deletes.
@@ -17,4 +19,4 @@ All notable changes to `darvis/laravel-uploads` are documented here. The format 
 - Livewire components `uploads.upload-manager` (upload, caption, drag to sort, remove, for one collection of one model) and `uploads.uploads-overview` (every upload, totals, filters, trash with restore and delete for good), registered when Livewire is installed, with Tailwind views and a Dutch translation.
 - `Darvis\Uploads\Support\UploadsConfig` as the single reader of the package config.
 - Laravel Boost guideline and skill, Pint, Larastan level 8 and the shared CI workflow on PHP 8.2 to 8.4 with Laravel 11, 12 and 13.
-- Documentation site at https://arviddejong.github.io/laravel-uploads/, built from `docs/`.
+- Documentation site at <https://arviddejong.github.io/laravel-uploads/>, built from `docs/`.
