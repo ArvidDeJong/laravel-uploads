@@ -4,12 +4,13 @@ namespace Darvis\Uploads\Http\Controllers;
 
 use Darvis\Uploads\Models\Upload;
 use Darvis\Uploads\Support\UploadsConfig;
-use Illuminate\Filesystem\LocalFilesystemAdapter;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use League\Flysystem\Local\LocalFilesystemAdapter;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -26,7 +27,7 @@ class UploadController extends Controller
 
         // A disk such as S3 hands out its own short lived link, so the file does not pass through PHP.
         // A local disk is streamed here instead, because its temporary URLs need Laravel's own serve route.
-        if (! $disk instanceof LocalFilesystemAdapter && $disk->providesTemporaryUrls()) {
+        if (! $this->isLocal($disk) && $disk->providesTemporaryUrls()) {
             return redirect()->away($disk->temporaryUrl($path, now()->addMinutes($config->temporaryUrlMinutes())));
         }
 
@@ -34,6 +35,15 @@ class UploadController extends Controller
 
         // Shown in the browser by default; `?download=1` forces a download with the original name.
         return $request->boolean('download') ? $disk->download($path, $name) : $disk->response($path, $name);
+    }
+
+    /**
+     * Asked of the Flysystem adapter, because Illuminate's own LocalFilesystemAdapter only
+     * exists since Laravel 11.30, and a local disk can have a temporary URL callback too.
+     */
+    protected function isLocal(FilesystemAdapter $disk): bool
+    {
+        return $disk->getAdapter() instanceof LocalFilesystemAdapter;
     }
 
     /**

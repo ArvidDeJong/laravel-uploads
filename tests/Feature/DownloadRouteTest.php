@@ -2,6 +2,7 @@
 
 use Darvis\Uploads\Models\Upload;
 use Darvis\Uploads\Tests\Fixtures\OpenUploadPolicy;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
@@ -109,4 +110,38 @@ it('falls back to the original while a conversion does not exist yet', function 
 
     expect($upload->isProcessed())->toBeFalse()
         ->and($upload->thumbnailUrl())->toBe($upload->url());
+});
+
+it('streams a private upload from a local disk that also builds temporary URLs', function () {
+    // Storage::fake() gives the local disk a temporary URL callback. Before Laravel 11.30 the
+    // disk is no Illuminate LocalFilesystemAdapter, so the Flysystem adapter has to decide.
+    Gate::policy(Upload::class, OpenUploadPolicy::class);
+    $upload = $this->createProduct()->addUpload(UploadedFile::fake()->create('secret.txt', 1, 'text/plain'))->fresh();
+
+    expect(Storage::disk('local')->providesTemporaryUrls())->toBeTrue();
+
+    $this->get($upload->url())->assertOk();
+});
+
+it('redirects to the temporary URL of a disk that is not local, such as S3', function () {
+    Gate::policy(Upload::class, OpenUploadPolicy::class);
+
+    $disk = new FilesystemAdapter(
+        Storage::disk('local')->getDriver(),
+        Mockery::mock(League\Flysystem\FilesystemAdapter::class),
+    );
+    $disk->buildTemporaryUrlsUsing(fn (string $path): string => 'https://bucket.example.com/'.$path.'?X-Amz-Signature=abc');
+    Storage::set('remote', $disk);
+
+    $upload = Upload::create([
+        'collection' => 'files',
+        'disk' => 'remote',
+        'path' => 'uploads/files/report.pdf',
+        'name' => 'report.pdf',
+        'mime_type' => 'application/pdf',
+        'size' => 10,
+        'is_public' => false,
+    ]);
+
+    $this->get($upload->url())->assertRedirect('https://bucket.example.com/uploads/files/report.pdf?X-Amz-Signature=abc');
 });

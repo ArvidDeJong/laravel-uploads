@@ -15,6 +15,7 @@ All notable changes to `darvis/laravel-uploads` are documented here. The format 
 
 ### Fixed
 
+- A private upload on a local disk is streamed again on Laravel 11.0 to 11.29 when the disk has a temporary URL callback, as `Storage::fake()` sets one. The download route redirected to that callback's URL instead, because Illuminate's `LocalFilesystemAdapter` only exists since Laravel 11.30; the route now asks the Flysystem adapter whether the disk is local.
 - With `pdf.driver` set to `auto`, a PDF is now rendered with `pdftoppm` when the Imagick extension is loaded but cannot read PDF files (Ghostscript missing, or ImageMagick's policy forbids PDF, the default on Debian and Ubuntu). Before, the processing job failed with `ImagickException: Failed to read the file`. Without `pdftoppm` the job now throws `PdfRenderingUnavailable` with the reason, for `auto` and `imagick` alike. Dispatch `ProcessUpload::dispatchFor($upload)` again for PDFs whose job failed.
 - `forceDelete()` on an upload that was loaded before the processing job ran, such as the one `addUpload()` returns, now also removes the conversions and the PDF pages. Before, only the original was removed and the generated files stayed on the disk. Files left behind by earlier hard deletes are not cleaned up; look for `<uuid>-*` files without an original in the upload folders.
 
