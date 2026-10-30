@@ -1,0 +1,42 @@
+title: darvis/laravel-uploads
+description: One Upload model for every file in a Laravel app. Attach files to any model in named collections, public or private, with extra data per upload, signed download links, image conversions and PDF pages from config, soft and hard delete, and an optional Livewire upload manager and overview.
+url: https://arviddejong.github.io
+baseurl: /laravel-uploads
+
+remote_theme: just-the-docs/just-the-docs@v0.12.0
+plugins:
+  - jekyll-remote-theme
+  - jekyll-relative-links
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# Facts about the package, used by the structured data and llms.txt.
+package:
+  name: darvis/laravel-uploads
+  repository: https://github.com/ArvidDeJong/laravel-uploads
+  packagist: https://packagist.org/packages/darvis/laravel-uploads
+  license_url: https://github.com/ArvidDeJong/laravel-uploads/blob/main/LICENSE
+  requires: PHP 8.2+ with the GD extension, Laravel 11, 12 or 13; Livewire 3 or 4 for the components; Imagick or pdftoppm for PDF pages
+  platforms: [Laravel]
+  keywords: [laravel, uploads, file uploads, attachments, media library, polymorphic uploads, s3, thumbnails, image conversions, pdf to image, livewire file upload, soft delete]
+
+# Developer credit in the footer and the structured data.
+developer:
+  company: ARVID.NL
+  url: https://arvid.nl
+
+color_scheme: light
+search_enabled: true
+heading_anchors: true
+
+aux_links:
+  GitHub: https://github.com/ArvidDeJong/laravel-uploads
+  Packagist: https://packagist.org/packages/darvis/laravel-uploads
+aux_links_new_tab: true
+
+gh_edit_link: true
+gh_edit_link_text: Edit this page on GitHub
+gh_edit_repository: https://github.com/ArvidDeJong/laravel-uploads
+gh_edit_branch: main
+gh_edit_source: docs
+gh_edit_view_mode: tree

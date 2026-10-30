@@ -1,0 +1,16 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 8
+    ignoreErrors:
+        # Larastan cannot resolve views registered under the package's view namespace.
+        -
+            identifier: argument.type
+            message: '#view-string\|null, string given#'
+            path: src/Livewire
+    paths:
+        - src
+        - database
+        - routes
+        - tests/Fixtures

@@ -1,0 +1,37 @@
+# Questions as people ask them to an assistant. Short, factual answers, checked against the docs.
+# Rendered on faq.md, in the FAQPage structured data and in llms.txt. Six to ten questions; more dilutes.
+- q: How do I attach a file to a model in Laravel with darvis/laravel-uploads?
+  a: >-
+    Add the `HasUploads` trait to the model and call `$model->addUpload($file, 'photos', public: true, meta: ['caption' => 'Front'])`. The file is stored on the public or private disk under `products/12/photos/<uuid>.jpg`, a row is written to the `uploads` table and a queued job makes the conversions. Read them back with `$model->uploadsIn('photos')`.
+
+- q: What is the difference between a public and a private upload?
+  a: >-
+    A public upload is stored on the `public` disk from `config/uploads.php` and `url()` is the permanent URL of the disk. A private upload is stored on the `private` disk and `url()` is a temporary signed link to the route `uploads.show`, which checks the `UploadPolicy` and then streams the file or redirects to a short lived S3 URL.
+
+- q: How are thumbnails made, and can I add my own sizes?
+  a: >-
+    Every image upload gets the conversions in `uploads.conversions`, each with a width and/or height, a fit (`cover` crops, `contain` scales down), a format (jpg, png or webp) and a quality. Add a key to that array for another size; `thumb` and `preview` ship by default. The job writes them next to the original and `conversionUrl('thumb')` returns the original while the job has not run yet.
+
+- q: Can the package turn a PDF into images?
+  a: >-
+    Yes. A PDF upload is rendered to one image per page, up to `pdf.max_pages`, with Imagick or the `pdftoppm` binary from poppler, and the first page gets the same conversions as an image, so a PDF has a thumbnail too. Use `pageUrl(2)` and `pageCount()` to show the pages.
+
+- q: Does it work with S3?
+  a: >-
+    Yes. Set the `public` and `private` disks to your S3 disks. Private files are served through a redirect to a temporary S3 URL, and with `LIVEWIRE_TEMPORARY_FILE_UPLOAD_DISK` pointed at a bucket the Livewire upload manager sends large files straight from the browser to S3. The `league/flysystem-aws-s3-v3` package is a suggestion, not a requirement.
+
+- q: What happens when I delete an upload?
+  a: >-
+    `delete()` is a soft delete: the row gets `deleted_at`, it disappears from relations and the files stay, so `restore()` brings it back. `forceDelete()` removes the row and every file, conversions and pages included. `php artisan uploads:prune` force deletes everything that has been in the trash longer than `prune_after_days`.
+
+- q: How do I store extra data with an upload?
+  a: >-
+    Pass an array as `meta` to `addUpload()` or call `$upload->setMeta('print.layer_height', 0.2)`. It is a JSON column, read with `$upload->meta('print.layer_height')`. Add a real column in your own migration only when you have to filter or sort on the value.
+
+- q: Does it need Livewire?
+  a: >-
+    No. The model, trait, action, route and job work in any Laravel app. When Livewire 3 or 4 is installed the package also registers `uploads.upload-manager` (upload, caption, sort, remove for one collection) and `uploads.uploads-overview` (every upload, totals, trash) with plain Tailwind views you can publish and restyle.
+
+- q: Which PHP and Laravel versions are supported?
+  a: >-
+    PHP 8.2 or higher with the GD extension, and Laravel 11, 12 and 13. Images are resized with Intervention Image 3 on GD; PDF pages need Imagick with Ghostscript or the pdftoppm binary.

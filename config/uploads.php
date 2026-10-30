@@ -1,0 +1,172 @@
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Conversions
+    |--------------------------------------------------------------------------
+    |
+    | Named image versions that are generated for every image upload and for
+    | the first page of every PDF. Each conversion has a `width` and/or a
+    | `height` in pixels, a `fit` (`contain` scales the image down so it fits
+    | inside the box without cropping, `cover` crops it to fill the box), a
+    | `format` (`jpg`, `png` or `webp`) and a `quality` from 1 to 100. The
+    | generated files live next to the original on the same disk, so a
+    | private upload keeps its conversions private too.
+    |
+    */
+
+    'conversions' => [
+        'thumb' => [
+            'fit' => 'cover',
+            'format' => 'webp',
+            'height' => 300,
+            'quality' => 80,
+            'width' => 300,
+        ],
+        'preview' => [
+            'fit' => 'contain',
+            'format' => 'webp',
+            'height' => 1200,
+            'quality' => 82,
+            'width' => 1200,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Disks
+    |--------------------------------------------------------------------------
+    |
+    | Public uploads are stored on the `public` disk and get a permanent URL.
+    | Private uploads are stored on the `private` disk and are only reachable
+    | through the signed download route of the package.
+    |
+    */
+
+    'disks' => [
+        'private' => env('UPLOADS_PRIVATE_DISK', 'local'),
+        'public' => env('UPLOADS_PUBLIC_DISK', 'public'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Download links
+    |--------------------------------------------------------------------------
+    |
+    | A private upload is served through a temporary signed URL. This value is
+    | how many minutes such a link stays valid. When the private disk can
+    | hand out its own temporary URLs (S3), the download route redirects to
+    | one that is valid for `temporary_url_minutes`.
+    |
+    */
+
+    'link_expires_after_minutes' => env('UPLOADS_LINK_EXPIRES_AFTER_MINUTES', 30),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Maximum file size
+    |--------------------------------------------------------------------------
+    |
+    | The largest file the Livewire upload manager accepts, in kilobytes.
+    | The default allows 500 MB, enough for a timelapse video. Files that go
+    | through `addUpload()` in your own code are not limited by this value.
+    |
+    */
+
+    'max_kilobytes' => env('UPLOADS_MAX_KILOBYTES', 512000),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Path prefix
+    |--------------------------------------------------------------------------
+    |
+    | Folder on the disk under which every upload is stored. Leave it empty
+    | to store directly in the root of the disk. Files are stored as
+    | `<prefix>/<models>/<id>/<collection>/<uuid>.<ext>`.
+    |
+    */
+
+    'path_prefix' => env('UPLOADS_PATH_PREFIX', ''),
+
+    /*
+    |--------------------------------------------------------------------------
+    | PDF rendering
+    |--------------------------------------------------------------------------
+    |
+    | PDF uploads are rendered to one image per page, up to `max_pages`, at
+    | `dpi` dots per inch in the given `format`. The `driver` is `imagick`
+    | (needs the Imagick extension with Ghostscript), `pdftoppm` (the poppler
+    | binary at `pdftoppm_path`) or `auto`, which takes the first one that is
+    | available. Set `max_pages` to 0 to turn page rendering off; the
+    | conversions are then made from the first page only.
+    |
+    */
+
+    'pdf' => [
+        'dpi' => 110,
+        'driver' => env('UPLOADS_PDF_DRIVER', 'auto'),
+        'format' => 'jpg',
+        'max_pages' => env('UPLOADS_PDF_MAX_PAGES', 50),
+        'pdftoppm_path' => env('UPLOADS_PDFTOPPM_PATH', 'pdftoppm'),
+        'quality' => 85,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pruning
+    |--------------------------------------------------------------------------
+    |
+    | Uploads are soft deleted first: the row gets `deleted_at` and the files
+    | stay on the disk, so a mistake can be undone with `restore()`. The
+    | `uploads:prune` command force deletes uploads that have been in the
+    | trash for more than this many days, which removes the files too.
+    |
+    */
+
+    'prune_after_days' => env('UPLOADS_PRUNE_AFTER_DAYS', 30),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Queue
+    |--------------------------------------------------------------------------
+    |
+    | Conversions and PDF pages are generated by a queued job on the given
+    | connection and queue. Set `connection` to `sync` to generate them in
+    | the request that stores the upload, which is fine for small images.
+    |
+    */
+
+    'queue' => [
+        'connection' => env('UPLOADS_QUEUE_CONNECTION'),
+        'queue' => env('UPLOADS_QUEUE'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Routes
+    |--------------------------------------------------------------------------
+    |
+    | Prefix and middleware for the download route `uploads.show`. The route
+    | always carries the `signed` middleware on top of this list.
+    |
+    */
+
+    'route_middleware' => ['web'],
+
+    'route_prefix' => 'uploads',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Temporary URLs
+    |--------------------------------------------------------------------------
+    |
+    | Minutes a temporary URL from the disk itself (S3) stays valid when the
+    | download route redirects to it.
+    |
+    */
+
+    'temporary_url_minutes' => env('UPLOADS_TEMPORARY_URL_MINUTES', 5),
+
+];

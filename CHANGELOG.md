@@ -1,0 +1,20 @@
+# Changelog
+
+All notable changes to `darvis/laravel-uploads` are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [Unreleased]
+
+### Added
+
+- `Darvis\Uploads\Models\Upload`: one row per file with a polymorphic owner, `collection`, `disk`, `path`, `name`, `mime_type`, `size`, `is_public`, `sort_order`, `meta` (JSON), `conversions` (JSON) and `processed_at`, with soft deletes.
+- `Darvis\Uploads\Models\Concerns\HasUploads`: `uploads()`, `uploadsIn()`, `firstUpload()`, `addUpload()` and `reorderUploads()`, and the `Darvis\Uploads\Contracts\UploadOwner` interface it satisfies.
+- `Darvis\Uploads\Actions\StoreUpload`: stores a file on the public or private disk as `<prefix>/<models>/<id>/<collection>/<uuid>.<ext>`, writes the row and dispatches the processing job.
+- `Darvis\Uploads\Jobs\ProcessUpload`: generates the conversions from `uploads.conversions` (width, height, `cover` or `contain`, `jpg`, `png` or `webp`, quality) with Intervention Image 3 on GD, renders a PDF to one image per page with Imagick or `pdftoppm` and makes the conversions from its first page, and dispatches `Darvis\Uploads\Events\UploadProcessed`.
+- Route `uploads.show` (signed) with `Darvis\Uploads\Http\Controllers\UploadController`, serving the original, a conversion (`?conversion=`) or a page (`?page=`) of a private upload, inline or as a download (`?download=1`), streamed or through a redirect to a temporary URL of the disk.
+- `Darvis\Uploads\Policies\UploadPolicy`: the uploader, the owner of the model (`user_id`) and an administrator (`is_admin`) may open and delete; replaceable with `Gate::policy()`.
+- `uploads:prune` command and `Prunable` on the model: hard delete, files included, after `prune_after_days` in the trash.
+- `Darvis\Uploads\Support\UploadStatistics`: totals per disk and per collection, the total and the trash.
+- Livewire components `uploads.upload-manager` (upload, caption, drag to sort, remove, for one collection of one model) and `uploads.uploads-overview` (every upload, totals, filters, trash with restore and delete for good), registered when Livewire is installed, with Tailwind views and a Dutch translation.
+- `Darvis\Uploads\Support\UploadsConfig` as the single reader of the package config.
+- Laravel Boost guideline and skill, Pint, Larastan level 8 and the shared CI workflow on PHP 8.2 to 8.4 with Laravel 11, 12 and 13.
+- Documentation site at https://arviddejong.github.io/laravel-uploads/, built from `docs/`.

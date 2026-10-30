@@ -1,0 +1,82 @@
+{
+    "name": "darvis/laravel-uploads",
+    "description": "One Upload model for every file in a Laravel app: attach files to any model in named collections, public or private disks, extra data per upload, signed download links, image conversions and PDF page rendering from config, soft and hard delete, and an optional Livewire upload manager and overview.",
+    "keywords": [
+        "laravel",
+        "uploads",
+        "files",
+        "attachments",
+        "media",
+        "s3",
+        "thumbnails",
+        "image-conversions",
+        "pdf-to-image",
+        "livewire",
+        "laravel-boost"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://arviddejong.github.io/laravel-uploads/",
+    "authors": [
+        {
+            "name": "Arvid de Jong",
+            "email": "info@arvid.nl"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/ArvidDeJong/laravel-uploads/issues",
+        "source": "https://github.com/ArvidDeJong/laravel-uploads"
+    },
+    "require": {
+        "php": "^8.2",
+        "ext-gd": "*",
+        "intervention/image": "^3.8",
+        "laravel/framework": "^11.0|^12.0|^13.0",
+        "symfony/process": "^7.0|^8.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.0",
+        "livewire/livewire": "^3.6|^4.0",
+        "orchestra/testbench": "^9.0|^10.0|^11.0",
+        "pestphp/pest": "^3.0|^4.0",
+        "pestphp/pest-plugin-laravel": "^3.0|^4.0",
+        "phpunit/phpunit": "^11.0|^12.0|^13.0"
+    },
+    "suggest": {
+        "ext-imagick": "Renders PDF pages to images without the pdftoppm binary.",
+        "league/flysystem-aws-s3-v3": "Required to store uploads on S3 (^3.0).",
+        "livewire/livewire": "Enables the upload manager and the uploads overview components (^3.6|^4.0)."
+    },
+    "autoload": {
+        "psr-4": {
+            "Darvis\\Uploads\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Darvis\\Uploads\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Darvis\\Uploads\\UploadsServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        },
+        "sort-packages": true
+    },
+    "scripts": {
+        "test": "pest",
+        "lint": "pint --test",
+        "format": "pint",
+        "analyse": "phpstan analyse --memory-limit=1G"
+    }
+}
