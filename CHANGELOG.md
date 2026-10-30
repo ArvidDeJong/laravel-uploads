@@ -4,6 +4,8 @@ All notable changes to `darvis/laravel-uploads` are documented here. The format 
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-30
+
 ### Added
 
 - Documentation for developers new to Laravel: a step by step tutorial from a fresh Laravel app to a photo page with thumbnails, a "How it works" page that explains owner, collection, disks, conversions, the queue, signed links and the trash, and a Forms section in Troubleshooting (419, a missing `enctype`, PHP upload limits).
