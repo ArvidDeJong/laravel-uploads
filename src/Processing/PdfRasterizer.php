@@ -5,6 +5,7 @@ namespace Darvis\Uploads\Processing;
 use Darvis\Uploads\Exceptions\PdfRenderingUnavailable;
 use Darvis\Uploads\Support\UploadsConfig;
 use Imagick;
+use ImagickException;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
 
@@ -54,12 +55,38 @@ class PdfRasterizer
         }
 
         return match ($this->driver()) {
-            'imagick' => $this->renderWithImagick($pdfPath, $directory, $maxPages),
+            'imagick' => $this->renderWithImagickOrFallBack($pdfPath, $directory, $maxPages),
             'pdftoppm' => $this->renderWithPdftoppm($pdfPath, $directory, $maxPages),
             default => throw new PdfRenderingUnavailable(
                 'No PDF driver is available: install the Imagick extension with Ghostscript, or poppler-utils for the pdftoppm binary.'
             ),
         };
+    }
+
+    /**
+     * Imagick can be loaded and still refuse PDF files: Ghostscript is missing, or ImageMagick's
+     * policy forbids PDF, which is the default on Debian and Ubuntu. With `auto` the pdftoppm
+     * binary takes over when it is there.
+     *
+     * @return array<int, string>
+     *
+     * @throws PdfRenderingUnavailable
+     */
+    protected function renderWithImagickOrFallBack(string $pdfPath, string $directory, int $maxPages): array
+    {
+        try {
+            return $this->renderWithImagick($pdfPath, $directory, $maxPages);
+        } catch (ImagickException $exception) {
+            if ($this->config->pdfDriver() === 'auto' && $this->pdftoppm() !== null) {
+                return $this->renderWithPdftoppm($pdfPath, $directory, $maxPages);
+            }
+
+            throw new PdfRenderingUnavailable(
+                'Imagick could not read the PDF ('.$exception->getMessage().'). Ghostscript is missing or ImageMagick\'s policy forbids PDF: '
+                .'install poppler-utils for the pdftoppm binary, or allow PDF in ImageMagick\'s policy.xml.',
+                previous: $exception,
+            );
+        }
     }
 
     /**

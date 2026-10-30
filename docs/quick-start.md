@@ -1,7 +1,7 @@
 ---
 title: "Quick start"
 description: "One complete example: a product with public photos and a private print file, the upload form, the gallery with thumbnails and the signed download link."
-nav_order: 3
+nav_order: 5
 ---
 
 # Quick start
@@ -22,7 +22,7 @@ class Product extends Model
 
 ## 2. Storing files
 
-In a controller, a Livewire component or a job, with any `Illuminate\Http\UploadedFile`:
+In a controller, a Livewire component or a job, with any `Illuminate\Http\UploadedFile`. The [tutorial](tutorial.md) shows the complete route, controller, validation and form around these lines.
 
 ```php
 // Public: stored on the public disk, shown on the site.
@@ -41,23 +41,24 @@ Each call stores the file as `products/<id>/<collection>/<uuid>.<ext>`, writes a
 
 ## 3. The gallery
 
-The templates on this site use PHP echo tags; in your Blade files write the usual double curly braces instead.
+{: .note }
+This site cannot show Blade's double curly braces, so the templates use `<?= e(...) ?>`, which escapes the value exactly like the braces do. Paste them as they are or write the braces; never drop the `e()`.
 
 ```blade
-@foreach ($product->uploadsIn('photos') as $photo)
-    <a href="<?= $photo->conversionUrl('preview') ?>">
-        <img src="<?= $photo->thumbnailUrl() ?>" alt="<?= $photo->meta('caption', $photo->name) ?>">
+@foreach ($product->uploadsIn('photos')->get() as $photo)
+    <a href="<?= e($photo->conversionUrl('preview')) ?>">
+        <img src="<?= e($photo->thumbnailUrl()) ?>" alt="<?= e($photo->meta('caption') ?: $photo->name) ?>">
     </a>
 @endforeach
 ```
 
-`thumbnailUrl()` is the `thumb` conversion once the job has run and the original until then, so the page never shows a broken image. `uploadsIn()` returns the uploads in display order and leaves out everything in the trash.
+`thumbnailUrl()` is the `thumb` conversion once the job has run and the original until then, so the page never shows a broken image. `uploadsIn()` is a query for the uploads in display order, without everything in the trash; `->get()` fetches them. A `foreach` over the query itself, without `->get()`, loops over nothing.
 
 ## 4. The private file
 
 ```blade
 @can('view', $print)
-    <a href="<?= $print->downloadUrl() ?>"><?= $print->name ?> (<?= $print->humanSize() ?>)</a>
+    <a href="<?= e($print->downloadUrl()) ?>"><?= e($print->name) ?> (<?= e($print->humanSize()) ?>)</a>
 @endcan
 ```
 
@@ -92,10 +93,10 @@ Schedule::command('uploads:prune')->daily();
 A PDF goes through the same `addUpload()`. The job renders every page to an image and makes the conversions from the first page, so a manual gets a thumbnail like a photo:
 
 ```blade
-<img src="<?= $manual->thumbnailUrl() ?>" alt="<?= $manual->name ?>">
+<img src="<?= e($manual->thumbnailUrl()) ?>" alt="<?= e($manual->name) ?>">
 
 @for ($page = 1; $page <= $manual->pageCount(); $page++)
-    <img src="<?= $manual->pageUrl($page) ?>" alt="Page <?= $page ?>">
+    <img src="<?= e($manual->pageUrl($page)) ?>" alt="Page <?= e($page) ?>">
 @endfor
 ```
 

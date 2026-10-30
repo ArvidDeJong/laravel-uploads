@@ -4,6 +4,20 @@ All notable changes to `darvis/laravel-uploads` are documented here. The format 
 
 ## [Unreleased]
 
+### Added
+
+- Documentation for developers new to Laravel: a step by step tutorial from a fresh Laravel app to a photo page with thumbnails, a "How it works" page that explains owner, collection, disks, conversions, the queue, signed links and the trash, and a Forms section in Troubleshooting (419, a missing `enctype`, PHP upload limits).
+- `support.docs` in `composer.json`, pointing at the documentation site.
+
+### Changed
+
+- Documentation: the quick start gallery fetches the photos with `uploadsIn('photos')->get()`; the old example looped over the query itself and showed nothing. Template examples now print with `e()`, so they are safe to paste. The installation check stores an upload without an owner, so it works before you have a model.
+
+### Fixed
+
+- With `pdf.driver` set to `auto`, a PDF is now rendered with `pdftoppm` when the Imagick extension is loaded but cannot read PDF files (Ghostscript missing, or ImageMagick's policy forbids PDF, the default on Debian and Ubuntu). Before, the processing job failed with `ImagickException: Failed to read the file`. Without `pdftoppm` the job now throws `PdfRenderingUnavailable` with the reason, for `auto` and `imagick` alike. Dispatch `ProcessUpload::dispatchFor($upload)` again for PDFs whose job failed.
+- `forceDelete()` on an upload that was loaded before the processing job ran, such as the one `addUpload()` returns, now also removes the conversions and the PDF pages. Before, only the original was removed and the generated files stayed on the disk. Files left behind by earlier hard deletes are not cleaned up; look for `<uuid>-*` files without an original in the upload folders.
+
 ## [1.0.0] - 2026-10-30
 
 ### Added

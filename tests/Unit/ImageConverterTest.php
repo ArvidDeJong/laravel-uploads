@@ -1,9 +1,11 @@
 <?php
 
+use Darvis\Uploads\Exceptions\PdfRenderingUnavailable;
 use Darvis\Uploads\Processing\ImageConverter;
 use Darvis\Uploads\Processing\PdfRasterizer;
 use Darvis\Uploads\Support\UploadsConfig;
 use Darvis\Uploads\Tests\Fixtures\User;
+use Symfony\Component\Process\ExecutableFinder;
 
 it('covers, contains and encodes in the asked format', function () {
     $source = $this->fakeImage('photo.png', 800, 600)->getRealPath();
@@ -45,6 +47,45 @@ it('picks the PDF driver from the config', function () {
     config()->set('uploads.pdf.driver', 'auto');
     expect((new PdfRasterizer(app(UploadsConfig::class)))->render('/nowhere.pdf', sys_get_temp_dir(), 0))->toBe([]);
 });
+
+/**
+ * A rasterizer whose Imagick refuses PDF files, as on Debian and Ubuntu where ImageMagick's
+ * policy forbids PDF or Ghostscript is missing.
+ */
+function rasterizerWithBrokenImagick(): PdfRasterizer
+{
+    return new class(app(UploadsConfig::class)) extends PdfRasterizer
+    {
+        public function driver(): ?string
+        {
+            return $this->config->pdfDriver() === 'pdftoppm' ? parent::driver() : 'imagick';
+        }
+
+        protected function renderWithImagick(string $pdfPath, string $directory, int $maxPages): array
+        {
+            throw new ImagickException('attempt to perform an operation not allowed by the security policy `PDF\'');
+        }
+    };
+}
+
+it('falls back to pdftoppm when Imagick cannot read the PDF', function () {
+    $directory = sys_get_temp_dir().'/uploads-fallback-'.uniqid();
+    mkdir($directory);
+
+    $pages = rasterizerWithBrokenImagick()->render((string) $this->fakePdf('manual.pdf', 2)->getRealPath(), $directory, 5);
+
+    expect($pages)->toHaveCount(2)->and($pages[0])->toEndWith('.jpg');
+
+    array_map('unlink', glob($directory.'/*') ?: []);
+    rmdir($directory);
+})->skip(fn () => ! class_exists(ImagickException::class) || ! is_executable((string) (new ExecutableFinder)->find('pdftoppm')), 'Needs the Imagick extension and pdftoppm.');
+
+it('explains why when Imagick cannot read the PDF and there is no pdftoppm', function () {
+    config()->set('uploads.pdf.pdftoppm_path', '/nonexistent/pdftoppm');
+
+    rasterizerWithBrokenImagick()->render((string) $this->fakePdf()->getRealPath(), sys_get_temp_dir(), 5);
+})->throws(PdfRenderingUnavailable::class, 'Imagick could not read the PDF')
+    ->skip(fn () => ! class_exists(ImagickException::class), 'Needs the Imagick extension.');
 
 it('reads every config key through UploadsConfig', function () {
     $config = app(UploadsConfig::class);

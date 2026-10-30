@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="300" viewBox="0 0 960 300" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>How darvis/laravel-uploads handles a file</title>
+  <desc>A file passed to addUpload is stored on the public or private disk, a row is written to the uploads table, a queued job makes the conversions and PDF pages, and the page shows a permanent URL or a signed link.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
+    </marker>
+  </defs>
+  <rect width="960" height="300" rx="16" fill="#ffffff"/>
+  <text x="480" y="40" text-anchor="middle" font-size="20" font-weight="600" fill="#0f172a">One upload, from form to page</text>
+
+  <g font-size="14" fill="#0f172a">
+    <rect x="24" y="80" width="190" height="120" rx="12" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+    <text x="119" y="112" text-anchor="middle" font-weight="600">1. addUpload()</text>
+    <text x="119" y="140" text-anchor="middle">$product-&gt;addUpload(</text>
+    <text x="119" y="160" text-anchor="middle">$file, 'photos',</text>
+    <text x="119" y="180" text-anchor="middle">public: true)</text>
+
+    <rect x="258" y="80" width="190" height="120" rx="12" fill="#f0fdf4" stroke="#22c55e" stroke-width="2"/>
+    <text x="353" y="112" text-anchor="middle" font-weight="600">2. Stored</text>
+    <text x="353" y="140" text-anchor="middle">public or private disk</text>
+    <text x="353" y="160" text-anchor="middle">products/1/photos/</text>
+    <text x="353" y="180" text-anchor="middle">+ a row in uploads</text>
+
+    <rect x="492" y="80" width="190" height="120" rx="12" fill="#fefce8" stroke="#eab308" stroke-width="2"/>
+    <text x="587" y="112" text-anchor="middle" font-weight="600">3. Processed</text>
+    <text x="587" y="140" text-anchor="middle">queued job makes</text>
+    <text x="587" y="160" text-anchor="middle">thumb, preview</text>
+    <text x="587" y="180" text-anchor="middle">and PDF pages</text>
+
+    <rect x="726" y="80" width="210" height="120" rx="12" fill="#faf5ff" stroke="#a855f7" stroke-width="2"/>
+    <text x="831" y="112" text-anchor="middle" font-weight="600">4. Shown</text>
+    <text x="831" y="140" text-anchor="middle">thumbnailUrl()</text>
+    <text x="831" y="160" text-anchor="middle">public: permanent URL</text>
+    <text x="831" y="180" text-anchor="middle">private: signed link</text>
+  </g>
+
+  <g stroke="#64748b" stroke-width="2" marker-end="url(#arrow)">
+    <line x1="216" y1="140" x2="254" y2="140"/>
+    <line x1="450" y1="140" x2="488" y2="140"/>
+    <line x1="684" y1="140" x2="722" y2="140"/>
+  </g>
+
+  <text x="480" y="250" text-anchor="middle" font-size="14" fill="#475569">delete() moves it to the trash and keeps the files · forceDelete() or uploads:prune removes everything</text>
+</svg>

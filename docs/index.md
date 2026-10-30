@@ -11,6 +11,11 @@ This package gives a **Laravel** application one place for every file people upl
 
 It is a light alternative to a full media library: one table, one model, one trait, one action, and an optional pair of Livewire components for the upload form and the administration.
 
+## Where to start
+
+- **New to Laravel, or to this package?** Follow the [Tutorial: your first upload](tutorial.md). In about twenty minutes you build a page where you upload product photos and see their thumbnails, and every step says what it does. [How it works](how-it-works.md) explains the ideas behind it in plain words.
+- **Know your way around Laravel?** Go to [Installation & configuration](installation.md) and the [Quick start](quick-start.md).
+
 ## Who it is for
 
 Laravel developers who want files attached to their own models with as little ceremony as possible, on local disks or S3, with private files that are only reachable through a link that expires, and with an overview of what is stored where.
@@ -34,6 +39,7 @@ Laravel developers who want files attached to their own models with as little ce
 ```bash
 composer require darvis/laravel-uploads
 php artisan migrate
+php artisan storage:link
 ```
 
 Then follow [Installation & configuration](installation.md) to check that it works.
@@ -53,6 +59,8 @@ Then follow [Installation & configuration](installation.md) to check that it wor
 
 ## Read next
 
+- [Tutorial: your first upload](tutorial.md): step by step from a fresh Laravel app to a working photo page, for developers new to Laravel
+- [How it works](how-it-works.md): owner, collection, disks, conversions, the queue, signed links and the trash in plain words
 - [Installation & configuration](installation.md): the steps from `composer require` to a first upload, and every config key
 - [Quick start](quick-start.md): one complete example with a product, photos and a private print file
 - [The Upload model](the-upload-model.md): the columns, the relations, the trait, the action and the meta data

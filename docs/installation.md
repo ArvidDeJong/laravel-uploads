@@ -1,10 +1,12 @@
 ---
 title: "Installation & configuration"
 description: "Install darvis/laravel-uploads step by step: requirements, migration, disks, the queue, a check that it works, and every key of config/uploads.php."
-nav_order: 2
+nav_order: 4
 ---
 
 # Installation & configuration
+
+New to Laravel? The [tutorial](tutorial.md) does the same steps one by one and explains each of them. This page is the reference: every requirement, step and config key.
 
 ## Requirements
 
@@ -68,7 +70,7 @@ class Product extends Model
 
 ## Check that it works
 
-Run this in `php artisan tinker`. It stores a PNG that GD draws on the spot, so you need no file at hand:
+Run this in `php artisan tinker`. It stores a PNG that GD draws on the spot, so you need no file at hand, and it stores it without an owner, so you need no model yet:
 
 ```php
 $image = imagecreatetruecolor(800, 600);
@@ -77,13 +79,13 @@ $path = storage_path('app/check.png');
 imagepng($image, $path);
 
 $file = new \Illuminate\Http\UploadedFile($path, 'check.png', 'image/png', null, true);
-$upload = \App\Models\Product::first()->addUpload($file, 'photos', public: true);
+$upload = app(\Darvis\Uploads\Actions\StoreUpload::class)->handle($file, 'photos', public: true);
 
 $upload->fresh()->conversions;
 $upload->fresh()->url();
 ```
 
-With `UPLOADS_QUEUE_CONNECTION=sync` the `conversions` array holds `thumb` and `preview` and both files exist under `storage/app/public/products/<id>/photos/`. With a real queue, `conversions` is `null` until the worker has processed the job. Open the URL in the browser; delete the test upload afterwards with `$upload->forceDelete()`, which removes the files too.
+With `UPLOADS_QUEUE_CONNECTION=sync` the `conversions` array holds `thumb` and `preview` and both files exist under `storage/app/public/uploads/photos/` (an upload without an owner goes to `uploads/<collection>`; with an owner it is `products/<id>/photos/`). With a real queue, `conversions` is `null` until the worker has processed the job. Open the URL in the browser; delete the test upload afterwards with `$upload->forceDelete()`, which removes the files too.
 
 ## Publish tags
 

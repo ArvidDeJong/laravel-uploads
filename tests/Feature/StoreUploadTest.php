@@ -5,7 +5,6 @@ use Darvis\Uploads\Events\UploadProcessed;
 use Darvis\Uploads\Exceptions\PdfRenderingUnavailable;
 use Darvis\Uploads\Jobs\ProcessUpload;
 use Darvis\Uploads\Models\Upload;
-use Darvis\Uploads\Processing\PdfRasterizer;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
@@ -155,7 +154,7 @@ it('renders the pages of a PDF and makes the conversions from the first page', f
     }
 
     expect(getimagesizefromstring(Storage::disk('local')->get($upload->pagePaths()[0]))[2])->toBe(IMAGETYPE_JPEG);
-})->skip(fn () => ! app(PdfRasterizer::class)->isAvailable(), 'No PDF driver on this machine.');
+})->skip(fn () => ! $this->pdfRenderingWorks(), 'No working PDF driver on this machine.');
 
 it('limits the rendered pages to max_pages', function () {
     config()->set('uploads.pdf.max_pages', 1);
@@ -164,7 +163,7 @@ it('limits the rendered pages to max_pages', function () {
     $upload = $product->addUpload($this->fakePdf('manual.pdf', 3), 'documents')->fresh();
 
     expect($upload->pageCount())->toBe(1);
-})->skip(fn () => ! app(PdfRasterizer::class)->isAvailable(), 'No PDF driver on this machine.');
+})->skip(fn () => ! $this->pdfRenderingWorks(), 'No working PDF driver on this machine.');
 
 it('fails the job for a PDF when no driver is available', function () {
     config()->set('uploads.pdf.driver', 'pdftoppm');

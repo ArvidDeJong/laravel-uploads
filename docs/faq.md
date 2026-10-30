@@ -1,6 +1,6 @@
 ---
 title: "FAQ"
-nav_order: 11
+nav_order: 13
 description: "Short answers about uploads in Laravel with this package: collections, public and private files, conversions, PDF pages, S3, soft delete and the Livewire components."
 faq: true
 ---

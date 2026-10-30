@@ -1,7 +1,7 @@
 ---
 title: "The Upload model"
 description: "The uploads table and the Upload model: columns, relations, scopes, URLs, meta data, the HasUploads trait, the StoreUpload action and the UploadOwner interface."
-nav_order: 4
+nav_order: 6
 ---
 
 # The Upload model

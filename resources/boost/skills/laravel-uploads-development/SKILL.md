@@ -35,7 +35,7 @@ Use this skill when code stores or shows files in an application that has `darvi
 ## Showing files
 
 ```php
-$product->uploadsIn('photos');          // ordered, without the trash
+$product->uploadsIn('photos')->get();    // ordered, without the trash; a query until ->get()
 $product->firstUpload('photos');        // cover photo or null
 $photo->thumbnailUrl();                 // thumb, or the original until processed
 $photo->conversionUrl('preview', minutes: 5);
@@ -119,6 +119,7 @@ The private bucket needs CORS for `PUT` and `POST` from the site's origin and a 
 - `pageUrl()` is counted from 1 and returns `null` beyond `pageCount()`.
 - A signed URL is computed over the full address, so `APP_URL` must match what the browser uses, or every link is a 403.
 - `uploads()` and `uploadsIn()` exclude the trash. Use `Upload::withTrashed()` or `onlyTrashed()` to reach it.
+- `uploads()` and `uploadsIn()` return a relation, not a collection. A `foreach` or `@foreach` over the relation itself loops over nothing, without an error; always call `->get()` (or `->first()`) first.
 - `reorderUploads()` only touches the given collection; ids from another collection or model are ignored, and ids not in the list keep their place after the ordered ones.
 - The route prefix and middleware are read when the routes are registered; changing them at runtime does nothing.
 - Deleting the owning model leaves its uploads in place, with `uploadable` resolving to `null`.

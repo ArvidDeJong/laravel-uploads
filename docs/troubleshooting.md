@@ -1,12 +1,36 @@
 ---
 title: "Troubleshooting"
-description: "Error messages and symptoms with cause and fix: no thumbnails, PdfRenderingUnavailable, 403 on a private link, a broken public image, ACL errors on S3, Livewire upload problems."
-nav_order: 10
+description: "Error messages and symptoms with cause and fix: 419 and failed uploads in a form, no thumbnails, PdfRenderingUnavailable, 403 on a private link, a broken public image, ACL errors on S3, Livewire upload problems."
+nav_order: 12
 ---
 
 # Troubleshooting
 
 Each entry is a symptom, the cause and the fix. The messages are quoted as the code writes them, so you can search for them.
+
+## Forms
+
+### 419 Page Expired after pressing Upload
+
+The form has no CSRF token. Put `@csrf` inside every form that sends POST, PUT or DELETE. The same page also appears when the form stayed open longer than the session lifetime; reload the page and try again.
+
+### The photo field must be an image, although you picked a photo
+
+Most likely the form has no `enctype="multipart/form-data"`. Without it the browser sends only the file name, not the file. Add it to the `<form>` tag, see [the tutorial](tutorial.md#step-5-the-page).
+
+When the form does have it, the file is not a type Laravel's `image` rule accepts: an iPhone photo in HEIC, or an SVG. Ask for JPEG or PNG, or validate with `mimes:` and the extensions you want.
+
+### The photo failed to upload.
+
+The file is larger than PHP accepts. PHP has two limits, `upload_max_filesize` for one file and `post_max_size` for the whole form, and both are 2 MB and 8 MB on many installations. See yours with `php -i` and look for those two names, then raise them in `php.ini` (on shared hosting: in the PHP settings of your control panel) and restart PHP. When the whole form is larger than `post_max_size`, Laravel answers with **413 Content Too Large** instead.
+
+### Argument #1 ($file) must be of type Illuminate\Http\UploadedFile, null given
+
+`addUpload()` got no file, because `$request->file('photo')` returned `null`. The name in `file('…')` differs from the `name` of the file input, the form has no `enctype="multipart/form-data"`, or nobody picked a file. Validate with `'photo' => ['required', 'image']` before calling `addUpload()`, so the visitor sees a message instead of an error page.
+
+### The gallery stays empty although there are uploads
+
+The page loops over `$product->uploadsIn('photos')` without `->get()`. `uploadsIn()` returns a query; looping over the query itself gives nothing. Write `$product->uploadsIn('photos')->get()`.
 
 ## Storing
 
@@ -60,7 +84,7 @@ A huge or broken PDF. Lower `pdf.max_pages` or `pdf.dpi`, or check the file with
 
 ### attempt to perform an operation not allowed by the security policy `PDF'
 
-Imagick refuses PDF files because of ImageMagick's policy. Edit `/etc/ImageMagick-6/policy.xml` (or `-7`) and change the `PDF` rights to `read|write`, or switch to `UPLOADS_PDF_DRIVER=pdftoppm`.
+Imagick refuses PDF files because of ImageMagick's policy, the default on Debian and Ubuntu. With `UPLOADS_PDF_DRIVER=auto` the package then uses `pdftoppm` when it is installed, and only fails when it is not; the message then starts with "Imagick could not read the PDF". Install `poppler-utils`, or edit `/etc/ImageMagick-6/policy.xml` (or `-7`) and change the `PDF` rights to `read|write`, or switch to `UPLOADS_PDF_DRIVER=pdftoppm`.
 
 ## Links
 

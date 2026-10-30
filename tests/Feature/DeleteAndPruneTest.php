@@ -39,6 +39,20 @@ it('hard deletes an upload together with its conversions and pages', function ()
     expect(Upload::withTrashed()->count())->toBe(0);
 });
 
+it('hard deletes the conversions of an instance that was loaded before the job ran', function () {
+    $product = $this->createProduct();
+
+    // No fresh(): the job saved the conversions on its own copy, so this one still has none.
+    $upload = $product->addUpload($this->fakeImage(), 'photos', public: true);
+
+    expect($upload->conversions)->toBeNull()
+        ->and(Storage::disk('public')->allFiles())->toHaveCount(3);
+
+    $upload->forceDelete();
+
+    expect(Storage::disk('public')->allFiles())->toBe([]);
+});
+
 it('prunes uploads that have been in the trash longer than the configured days', function () {
     config()->set('uploads.prune_after_days', 7);
     $product = $this->createProduct();

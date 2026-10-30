@@ -25,6 +25,17 @@ developer:
   company: ARVID.NL
   url: https://arvid.nl
 
+callouts:
+  note:
+    title: Note
+    color: blue
+  tip:
+    title: Tip
+    color: green
+  warning:
+    title: Warning
+    color: red
+
 color_scheme: light
 search_enabled: true
 heading_anchors: true

@@ -24,6 +24,7 @@
         }
     ],
     "support": {
+        "docs": "https://arviddejong.github.io/laravel-uploads/",
         "issues": "https://github.com/ArvidDeJong/laravel-uploads/issues",
         "source": "https://github.com/ArvidDeJong/laravel-uploads"
     },

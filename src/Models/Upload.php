@@ -82,6 +82,16 @@ class Upload extends Model
 
     protected static function booted(): void
     {
+        // The job saves the conversions on its own copy of the row, so an instance loaded
+        // before it ran does not know them. Read them while the row still exists.
+        static::forceDeleting(function (Upload $upload): void {
+            $stored = static::withTrashed()->whereKey($upload->getKey())->first();
+
+            if ($stored !== null) {
+                $upload->conversions = $stored->conversions;
+            }
+        });
+
         // A soft delete keeps the files so the upload can be restored; only a
         // hard delete removes the original and everything generated from it.
         static::forceDeleted(function (Upload $upload): void {

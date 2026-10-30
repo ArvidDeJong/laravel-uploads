@@ -16,6 +16,8 @@ A light alternative to a full media library: one table, one model, one trait, on
 action, and an optional pair of Livewire components for the upload form and the
 administration.
 
+![How darvis/laravel-uploads handles a file: addUpload stores it on the public or private disk with a row in the uploads table, a queued job makes the conversions and PDF pages, and the page shows a permanent URL or a signed link](https://arviddejong.github.io/laravel-uploads/assets/upload-flow.svg)
+
 ## Features
 
 - **One model**: `Upload` with a polymorphic owner, `collection`, `disk`, `path`, `name`, `mime_type`, `size`, `is_public`, `sort_order`, `meta`, `conversions` and `processed_at`
@@ -47,6 +49,10 @@ php artisan storage:link
 [Installation & configuration](https://arviddejong.github.io/laravel-uploads/installation.html)
 has the steps up to a first upload with thumbnails, the publish tags and every config key.
 
+**New to Laravel?** The [tutorial](https://arviddejong.github.io/laravel-uploads/tutorial.html)
+takes you from a fresh Laravel app to a page where you upload product photos and see their
+thumbnails, and explains every step on the way.
+
 ## Quick start
 
 ```php
@@ -67,7 +73,7 @@ $photo->conversionUrl('preview');
 $print->downloadUrl();           // signed link, 30 minutes, checked by UploadPolicy
 $print->humanSize();             // "1.2 MB"
 
-$product->uploadsIn('photos');   // ordered, without the trash
+$product->uploadsIn('photos')->get(); // ordered, without the trash
 $product->firstUpload('photos');
 ```
 
@@ -86,6 +92,8 @@ Full documentation: **https://arviddejong.github.io/laravel-uploads/**
 
 | Page | |
 | --- | --- |
+| [Tutorial: your first upload](https://arviddejong.github.io/laravel-uploads/tutorial.html) | Step by step from a fresh Laravel app to a working photo page, for developers new to Laravel |
+| [How it works](https://arviddejong.github.io/laravel-uploads/how-it-works.html) | Owner, collection, disks, conversions, the queue, signed links and the trash in plain words |
 | [Installation & configuration](https://arviddejong.github.io/laravel-uploads/installation.html) | From `composer require` to a first upload, and every config key |
 | [Quick start](https://arviddejong.github.io/laravel-uploads/quick-start.html) | A product with public photos and a private print file, form, gallery and download |
 | [The Upload model](https://arviddejong.github.io/laravel-uploads/the-upload-model.html) | Columns, relations, URLs, meta data, the trait and the action |

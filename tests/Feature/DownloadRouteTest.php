@@ -1,7 +1,6 @@
 <?php
 
 use Darvis\Uploads\Models\Upload;
-use Darvis\Uploads\Processing\PdfRasterizer;
 use Darvis\Uploads\Tests\Fixtures\OpenUploadPolicy;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
@@ -81,7 +80,7 @@ it('serves the rendered pages of a private PDF', function () {
 
     $this->get($upload->pageUrl(2))->assertOk()->assertHeader('content-type', 'image/jpeg');
     expect($upload->pageUrl(3))->toBeNull();
-})->skip(fn () => ! app(PdfRasterizer::class)->isAvailable(), 'No PDF driver on this machine.');
+})->skip(fn () => ! $this->pdfRenderingWorks(), 'No working PDF driver on this machine.');
 
 it('answers 404 for an upload in the trash', function () {
     $this->actingAs($this->createUser());

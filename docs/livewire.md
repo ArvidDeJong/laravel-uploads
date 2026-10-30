@@ -1,7 +1,7 @@
 ---
 title: "Livewire components"
 description: "The upload manager (upload, caption, drag to sort, remove for one collection) and the uploads overview (totals, filters, trash): parameters, authorization, events, publishing the views and direct uploads to S3."
-nav_order: 7
+nav_order: 9
 ---
 
 # Livewire components

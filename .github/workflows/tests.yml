@@ -9,4 +9,7 @@ on:
 jobs:
   tests:
     uses: ArvidDeJong/.github/.github/workflows/laravel-package.yml@main
+    with:
+      # pdftoppm, so the PDF tests run instead of skipping.
+      apt-packages: poppler-utils
     secrets: inherit

@@ -164,12 +164,35 @@ test('docs has no README that duplicates the site index', function () {
 test('the pages a beginner needs exist and are linked from the index', function () {
     $index = (string) file_get_contents(docsSitePath('index.md'));
 
-    foreach (['installation', 'quick-start', 'the-upload-model', 'conversions-and-pdf', 'private-files', 'livewire', 'administration', 'testing', 'troubleshooting', 'faq'] as $page) {
+    foreach (['tutorial', 'how-it-works', 'installation', 'quick-start', 'the-upload-model', 'conversions-and-pdf', 'private-files', 'livewire', 'administration', 'testing', 'troubleshooting', 'faq'] as $page) {
         expect(docsSitePath($page.'.md'))->toBeFile();
         expect($index)->toContain(']('.$page.'.md)');
     }
 
     expect(file_get_contents(docsSitePath('installation.md')))->toContain('## Check that it works');
+});
+
+test('template examples escape what they print', function () {
+    // The site cannot show Blade's double curly braces, so examples print with PHP echo tags.
+    // Readers paste them as they are, and without e() a caption becomes an XSS hole.
+    foreach (docsSitePages() as $page) {
+        preg_match_all('/<\?=\s*+(?!e\()[^\n]*/', (string) file_get_contents($page), $unescaped);
+
+        expect($unescaped[0])->toBe([], basename($page).' prints without e()');
+    }
+});
+
+test('examples fetch the uploads before they loop over them', function () {
+    // uploadsIn() returns a relation; a foreach over the relation itself loops over nothing.
+    $files = array_merge(docsSitePages(), [
+        dirname(__DIR__).'/README.md',
+        dirname(__DIR__).'/resources/boost/guidelines/core.blade.php',
+        dirname(__DIR__).'/resources/boost/skills/laravel-uploads-development/SKILL.md',
+    ]);
+
+    foreach ($files as $file) {
+        expect(file_get_contents($file))->not->toMatch('/foreach \(\$\w+->uploads(?:In)?\([^)]*\) as/', basename($file));
+    }
 });
 
 test('the FAQ stays at six to ten questions', function () {

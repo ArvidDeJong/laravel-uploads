@@ -1,7 +1,7 @@
 ---
 title: "Private files"
 description: "How a private upload is served: the signed route uploads.show, the UploadPolicy and how to replace it, downloads, conversions of private files, and the S3 setup with two buckets."
-nav_order: 6
+nav_order: 8
 ---
 
 # Private files

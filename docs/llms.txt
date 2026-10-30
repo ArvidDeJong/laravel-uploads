@@ -7,7 +7,7 @@ sitemap: false
 
 > {{ site.description }}
 
-- Install: `composer require {{ site.package.name }}` then `php artisan migrate`
+- Install: `composer require {{ site.package.name }}` then `php artisan migrate` and `php artisan storage:link`
 - Requires: {{ site.package.requires }}
 - License: MIT
 - Source: {{ site.package.repository }}

@@ -2,6 +2,7 @@
 
 namespace Darvis\Uploads\Tests;
 
+use Darvis\Uploads\Processing\PdfRasterizer;
 use Darvis\Uploads\Tests\Fixtures\Product;
 use Darvis\Uploads\Tests\Fixtures\User;
 use Darvis\Uploads\UploadsServiceProvider;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\Concerns\WithLaravelMigrations;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Throwable;
 
 abstract class TestCase extends Orchestra
 {
@@ -82,6 +84,25 @@ abstract class TestCase extends Orchestra
         imagepng($image, $path);
 
         return new UploadedFile($path, $name, 'image/png', null, true);
+    }
+
+    /**
+     * Whether this machine can really render a PDF. Imagick can be loaded and still refuse PDF
+     * files (no Ghostscript, or ImageMagick's policy forbids PDF, as on Debian and Ubuntu).
+     */
+    public function pdfRenderingWorks(): bool
+    {
+        $directory = sys_get_temp_dir().'/uploads-pdf-check-'.uniqid();
+        mkdir($directory);
+
+        try {
+            return app(PdfRasterizer::class)->render((string) $this->fakePdf()->getRealPath(), $directory, 1) !== [];
+        } catch (Throwable) {
+            return false;
+        } finally {
+            array_map('unlink', glob($directory.'/*') ?: []);
+            rmdir($directory);
+        }
     }
 
     /**
