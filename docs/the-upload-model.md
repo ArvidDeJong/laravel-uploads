@@ -36,6 +36,7 @@ Upload::public();        // or ->private()
 Upload::collection('photos');
 Upload::ordered();       // sort_order, then id
 Upload::images();        // mime type image/*
+Upload::videos();        // mime type video/*
 Upload::processed();     // the job has run
 Upload::withTrashed();   // the usual soft delete scopes
 ```
@@ -99,8 +100,11 @@ $product->uploads();                  // MorphMany, ordered, without the trash
 $product->uploadsIn('photos');        // one collection
 $product->firstUpload('photos');      // the cover photo, or null
 $product->addUpload($file, 'photos', public: true, meta: []);
+$product->addUploadFromContents($png, 'front-studio.png', 'photos', public: true);   // contents instead of a form file
 $product->reorderUploads('photos', [12, 7, 9]);   // ids not in the list keep their place after these
 ```
+
+`addUploadFromContents()` stores a string, for example an image an API generated or a PDF your code downloaded. The name gives the stored file name and its extension, exactly like the original name of a form file; the mime type is detected from the contents unless you pass `mimeType:`. The upload is processed like any other.
 
 `Darvis\Uploads\Contracts\UploadOwner` declares the same methods. Implement it on the model when you want to type hint "a model with uploads"; the trait satisfies it and the Livewire upload manager is annotated with it.
 

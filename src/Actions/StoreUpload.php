@@ -32,7 +32,7 @@ class StoreUpload
     ): Upload {
         $disk = $this->config->diskFor($public);
         $directory = $this->directoryFor($owner, $collection);
-        $filename = $this->filenameFor($file, $disk, $directory);
+        $filename = $this->filenameFor($file->getClientOriginalName(), $this->extensionOf($file), $disk, $directory);
 
         // storeAs streams the file to the disk, so a Livewire temporary file on S3 is copied
         // without passing through the web server's memory.
@@ -42,6 +42,57 @@ class StoreUpload
             throw new \RuntimeException("Upload [{$file->getClientOriginalName()}] could not be stored on disk [{$disk}].");
         }
 
+        return $this->record($owner, $userId, $collection, $disk, $path, $file->getClientOriginalName(), $file->getMimeType() ?: $file->getClientMimeType(), (int) $file->getSize(), $public, $meta);
+    }
+
+    /**
+     * Store file contents that did not come from a form, such as a generated image or a
+     * downloaded PDF. The name is the original file name, its extension is kept.
+     *
+     * @param  array<string, mixed>  $meta  Extra data kept with the upload, such as a caption.
+     */
+    public function handleContents(
+        string $contents,
+        string $name,
+        string $collection = 'files',
+        bool $public = false,
+        array $meta = [],
+        ?Model $owner = null,
+        ?int $userId = null,
+        ?string $mimeType = null,
+    ): Upload {
+        $disk = $this->config->diskFor($public);
+        $directory = $this->directoryFor($owner, $collection);
+        $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        $filename = $this->filenameFor($name, $extension === '' ? '' : '.'.$extension, $disk, $directory);
+        $path = ($directory === '' ? '' : $directory.'/').$filename;
+
+        if (! Storage::disk($disk)->put($path, $contents)) {
+            throw new \RuntimeException("Upload [{$name}] could not be stored on disk [{$disk}].");
+        }
+
+        $mimeType ??= (new \finfo(FILEINFO_MIME_TYPE))->buffer($contents) ?: null;
+
+        return $this->record($owner, $userId, $collection, $disk, $path, $name, $mimeType, strlen($contents), $public, $meta);
+    }
+
+    /**
+     * Create the row for a stored file and queue its processing.
+     *
+     * @param  array<string, mixed>  $meta
+     */
+    protected function record(
+        ?Model $owner,
+        ?int $userId,
+        string $collection,
+        string $disk,
+        string $path,
+        string $name,
+        ?string $mimeType,
+        int $size,
+        bool $public,
+        array $meta,
+    ): Upload {
         $upload = Upload::create([
             'uploadable_type' => $owner?->getMorphClass(),
             'uploadable_id' => $owner?->getKey(),
@@ -49,9 +100,9 @@ class StoreUpload
             'collection' => $collection,
             'disk' => $disk,
             'path' => $path,
-            'name' => $file->getClientOriginalName(),
-            'mime_type' => $file->getMimeType() ?: $file->getClientMimeType(),
-            'size' => (int) $file->getSize(),
+            'name' => $name,
+            'mime_type' => $mimeType,
+            'size' => $size,
             'is_public' => $public,
             'sort_order' => $this->nextSortOrder($owner, $collection),
             'meta' => $meta === [] ? null : $meta,
@@ -100,12 +151,11 @@ class StoreUpload
     }
 
     /**
-     * A file name that is free in the directory, with the lower-cased original extension.
+     * A file name that is free in the directory, with the given extension (dot included).
      */
-    protected function filenameFor(UploadedFile $file, string $disk, string $directory): string
+    protected function filenameFor(string $originalName, string $extension, string $disk, string $directory): string
     {
-        $extension = $this->extensionOf($file);
-        $original = $this->config->fileNameStrategy() === 'original' ? $this->originalBasename($file) : '';
+        $original = $this->config->fileNameStrategy() === 'original' ? $this->originalBasename($originalName) : '';
         $basename = $original !== '' ? $original : $this->randomBasename();
 
         for ($number = 2; $this->isTaken($disk, $directory, $basename, $extension); $number++) {
@@ -119,9 +169,9 @@ class StoreUpload
      * The original name without extension as a slug, cut to the maximum length after the last
      * whole word when there is one; empty when nothing is left.
      */
-    protected function originalBasename(UploadedFile $file): string
+    protected function originalBasename(string $originalName): string
     {
-        $slug = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+        $slug = Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
         $length = $this->config->fileNameMaxLength();
 
         if (strlen($slug) <= $length) {
@@ -189,16 +239,22 @@ class StoreUpload
         return $extension === '' ? '' : '.'.$extension;
     }
 
+    /**
+     * One past the highest position in the collection, so a new upload comes last even after
+     * an upload in the middle was deleted and the positions have a gap.
+     */
     protected function nextSortOrder(?Model $owner, string $collection): int
     {
         if ($owner === null) {
             return 0;
         }
 
-        return Upload::query()
+        $highest = Upload::query()
             ->where('uploadable_type', $owner->getMorphClass())
             ->where('uploadable_id', $owner->getKey())
             ->collection($collection)
-            ->count();
+            ->max('sort_order');
+
+        return $highest === null ? 0 : (int) $highest + 1;
     }
 }

@@ -58,7 +58,7 @@ The job has not run. With a queue connection other than `sync` a worker has to b
 
 ### Unable to decode input
 
-An Intervention Image exception in the job: the file is not an image GD can read, although its mime type says `image/…`. Typical for a HEIC photo from an iPhone or an SVG. GD reads JPEG, PNG, GIF, WebP, BMP and AVIF; convert HEIC in the browser or on the phone, and leave SVG files out of the conversions by storing them in a collection you do not show through `thumbnailUrl()`.
+A warning in the log, `Upload [12] cannot be processed: The image cannot be decoded`: the file is not an image GD can read, although its mime type says `image/…`. The upload is marked as processed without conversions and shows its original. Typical for a HEIC photo from an iPhone or an SVG. GD reads JPEG, PNG, GIF, WebP, BMP and AVIF; convert HEIC in the browser or on the phone, and leave SVG files out of the conversions by storing them in a collection you do not show through `thumbnailUrl()`.
 
 ### Conversion format [gif] is not supported; use jpg, png or webp.
 

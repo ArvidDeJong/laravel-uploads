@@ -66,6 +66,17 @@ trait HasUploads
     }
 
     /**
+     * Store file contents for this model, such as a generated image, and queue its processing.
+     * The name is the original file name; without a mime type it is detected from the contents.
+     *
+     * @param  array<string, mixed>  $meta  Extra data kept with the upload, such as a caption.
+     */
+    public function addUploadFromContents(string $contents, string $name, string $collection = 'files', bool $public = false, array $meta = [], ?string $mimeType = null): Upload
+    {
+        return app(StoreUpload::class)->handleContents($contents, $name, $collection, $public, $meta, $this, mimeType: $mimeType);
+    }
+
+    /**
      * Put the uploads of a collection in the given order of ids. Ids that are not
      * in the list keep their place after the ordered ones.
      *

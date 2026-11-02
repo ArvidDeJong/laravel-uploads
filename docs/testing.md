@@ -44,6 +44,18 @@ it('makes a thumbnail of a product photo', function () {
 
 Call `fresh()` after `addUpload()` when the job ran synchronously: the job updates its own copy of the model.
 
+## Rows without a file
+
+When a test only needs the row, for example to check an ordering or a policy, `Upload::factory()` makes one without writing a file. It uses the disks from the config; the states are `public()`, `pdf()`, `video()` and `processed()`:
+
+```php
+use Darvis\Uploads\Models\Upload;
+
+$photo = Upload::factory()->for($product, 'uploadable')->public()->processed()->create(['collection' => 'photos']);
+```
+
+Use `addUpload()` with a fake file when the test needs the file on the disk or its conversions.
+
 ## Private links
 
 ```php

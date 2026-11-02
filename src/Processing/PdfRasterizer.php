@@ -3,9 +3,11 @@
 namespace Darvis\Uploads\Processing;
 
 use Darvis\Uploads\Exceptions\PdfRenderingUnavailable;
+use Darvis\Uploads\Exceptions\UnreadableFile;
 use Darvis\Uploads\Support\UploadsConfig;
 use Imagick;
 use ImagickException;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
 
@@ -47,6 +49,7 @@ class PdfRasterizer
      * @return array<int, string> Local paths of the rendered pages, in page order.
      *
      * @throws PdfRenderingUnavailable
+     * @throws UnreadableFile
      */
     public function render(string $pdfPath, string $directory, int $maxPages): array
     {
@@ -147,7 +150,16 @@ class PdfRasterizer
 
         $process = new Process($command);
         $process->setTimeout(300);
-        $process->mustRun();
+        $process->run();
+
+        // Exit code 1 is pdftoppm's "error opening a PDF file": the file is damaged or empty.
+        if ($process->getExitCode() === 1) {
+            throw new UnreadableFile('pdftoppm cannot open the PDF: '.trim($process->getErrorOutput()));
+        }
+
+        if (! $process->isSuccessful()) {
+            throw new ProcessFailedException($process);
+        }
 
         // pdftoppm numbers the files with leading zeros when the PDF has ten pages or more.
         $paths = glob($prefix.'-*.'.$format) ?: [];

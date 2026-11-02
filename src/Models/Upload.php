@@ -2,9 +2,11 @@
 
 namespace Darvis\Uploads\Models;
 
+use Darvis\Uploads\Database\Factories\UploadFactory;
 use Darvis\Uploads\Jobs\ProcessUpload;
 use Darvis\Uploads\Support\UploadsConfig;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,6 +43,9 @@ use Illuminate\Support\Number;
  */
 class Upload extends Model
 {
+    /** @use HasFactory<UploadFactory> */
+    use HasFactory;
+
     use Prunable;
     use SoftDeletes;
 
@@ -84,6 +89,14 @@ class Upload extends Model
             'size' => 'integer',
             'sort_order' => 'integer',
         ];
+    }
+
+    /**
+     * @return UploadFactory
+     */
+    protected static function newFactory()
+    {
+        return UploadFactory::new();
     }
 
     protected static function booted(): void
@@ -164,6 +177,15 @@ class Upload extends Model
     public function scopeImages(Builder $query): Builder
     {
         return $query->where('mime_type', 'like', 'image/%');
+    }
+
+    /**
+     * @param  Builder<Upload>  $query
+     * @return Builder<Upload>
+     */
+    public function scopeVideos(Builder $query): Builder
+    {
+        return $query->where('mime_type', 'like', 'video/%');
     }
 
     /**

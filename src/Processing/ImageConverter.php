@@ -2,6 +2,8 @@
 
 namespace Darvis\Uploads\Processing;
 
+use Darvis\Uploads\Exceptions\UnreadableFile;
+use Intervention\Image\Exceptions\DecoderException;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
 
@@ -27,6 +29,8 @@ class ImageConverter
      *
      * @param  array{crop?: array{x: int, y: int, width: int, height: int}|null, fit?: string, format?: string, height?: int|null, quality?: int, width?: int|null}  $conversion
      * @return array{0: string, 1: string} The encoded image and its file extension.
+     *
+     * @throws UnreadableFile
      */
     public function make(string $sourcePath, array $conversion): array
     {
@@ -35,7 +39,11 @@ class ImageConverter
         $format = $this->format($conversion['format'] ?? 'jpg');
         $quality = max(1, min(100, (int) ($conversion['quality'] ?? 85)));
 
-        $image = $this->manager()->read($sourcePath);
+        try {
+            $image = $this->manager()->read($sourcePath);
+        } catch (DecoderException $exception) {
+            throw new UnreadableFile('The image cannot be decoded: '.$exception->getMessage(), previous: $exception);
+        }
 
         if (isset($conversion['crop'])) {
             $image = $this->crop($image, $conversion['crop']);

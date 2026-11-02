@@ -3,6 +3,7 @@
 namespace Darvis\Uploads\Jobs;
 
 use Darvis\Uploads\Events\UploadProcessed;
+use Darvis\Uploads\Exceptions\UnreadableFile;
 use Darvis\Uploads\Models\Upload;
 use Darvis\Uploads\Processing\ImageConverter;
 use Darvis\Uploads\Processing\PdfRasterizer;
@@ -14,6 +15,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -80,24 +82,33 @@ class ProcessUpload implements ShouldQueue
 
             $source = $original;
 
-            if ($upload->isPdf()) {
-                $pages = $rasterizer->render($original, $workDirectory, $config->pdfMaxPages());
-                $generated[Upload::PAGES] = $this->storePages($disk, $upload, $pages);
-                $source = $pages[0] ?? null;
-            }
-
-            // The crop area is measured on the image itself, so it does not apply to PDF pages.
-            $crop = $upload->isImage() ? $upload->cropArea() : null;
-
-            if ($source !== null) {
-                foreach ($config->conversions() as $name => $conversion) {
-                    [$binary, $extension] = $converter->make($source, $crop === null ? $conversion : $conversion + ['crop' => $crop]);
-
-                    $path = $this->generatedPath($upload, (string) $name, $extension);
-                    $disk->put($path, $binary);
-
-                    $generated[(string) $name] = $path;
+            try {
+                if ($upload->isPdf()) {
+                    $pages = $rasterizer->render($original, $workDirectory, $config->pdfMaxPages());
+                    $generated[Upload::PAGES] = $this->storePages($disk, $upload, $pages);
+                    $source = $pages[0] ?? null;
                 }
+
+                // The crop area is measured on the image itself, so it does not apply to PDF pages.
+                $crop = $upload->isImage() ? $upload->cropArea() : null;
+
+                if ($source !== null) {
+                    foreach ($config->conversions() as $name => $conversion) {
+                        [$binary, $extension] = $converter->make($source, $crop === null ? $conversion : $conversion + ['crop' => $crop]);
+
+                        $path = $this->generatedPath($upload, (string) $name, $extension);
+                        $disk->put($path, $binary);
+
+                        $generated[(string) $name] = $path;
+                    }
+                }
+            } catch (UnreadableFile $exception) {
+                // A damaged image or PDF stays damaged, so a retry would only fail again. The upload
+                // is marked as processed without conversions and the views show the original.
+                Log::warning("Upload [{$upload->getKey()}] cannot be processed: {$exception->getMessage()}", [
+                    'disk' => $upload->disk,
+                    'path' => $upload->path,
+                ]);
             }
 
             $upload->update([

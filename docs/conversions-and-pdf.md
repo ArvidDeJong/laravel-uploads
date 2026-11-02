@@ -69,7 +69,7 @@ While the job has not run yet, `conversionUrl()` returns the original, so a gall
 
 `Darvis\Uploads\Jobs\ProcessUpload` is dispatched by `StoreUpload` on the connection and queue from `uploads.queue`. It copies the original to a temporary file, renders the PDF pages when the upload is a PDF, makes every conversion (from the crop area only when the image has one, see [Cropping images](cropping.md)), writes everything to the disk, fills `conversions` and `processed_at`, removes the temporary files and dispatches `Darvis\Uploads\Events\UploadProcessed`. A file that is neither an image nor a PDF only gets `processed_at`.
 
-The job tries three times. When it keeps failing, the upload stays with `processed_at = null` and the site keeps showing the original; look at `failed_jobs` for the reason.
+A damaged or empty image or PDF does not fail the job: retrying would not help, so the upload gets `processed_at` without conversions, a warning goes to the log and the site keeps showing the original. Any other error, such as a disk that cannot be read or a missing PDF driver, fails the job, which tries three times. When it keeps failing, the upload stays with `processed_at = null` and the site keeps showing the original; look at `failed_jobs` for the reason.
 
 ## Adding a conversion later
 

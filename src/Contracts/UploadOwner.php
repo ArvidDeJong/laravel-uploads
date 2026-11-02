@@ -33,6 +33,11 @@ interface UploadOwner
     public function addUpload(UploadedFile $file, string $collection = 'files', bool $public = false, array $meta = []): Upload;
 
     /**
+     * @param  array<string, mixed>  $meta
+     */
+    public function addUploadFromContents(string $contents, string $name, string $collection = 'files', bool $public = false, array $meta = [], ?string $mimeType = null): Upload;
+
+    /**
      * @param  array<int, int|string>  $ids
      */
     public function reorderUploads(string $collection, array $ids): void;

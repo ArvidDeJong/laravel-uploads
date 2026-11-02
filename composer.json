@@ -51,7 +51,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Darvis\\Uploads\\": "src/"
+            "Darvis\\Uploads\\": "src/",
+            "Darvis\\Uploads\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {

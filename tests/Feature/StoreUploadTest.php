@@ -5,9 +5,11 @@ use Darvis\Uploads\Events\UploadProcessed;
 use Darvis\Uploads\Exceptions\PdfRenderingUnavailable;
 use Darvis\Uploads\Jobs\ProcessUpload;
 use Darvis\Uploads\Models\Upload;
+use Darvis\Uploads\Processing\PdfRasterizer;
 use Darvis\Uploads\Tests\Fixtures\NewsItem;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
@@ -263,3 +265,79 @@ it('fails the job for a PDF when no driver is available', function () {
 
     $product->addUpload($this->fakePdf(), 'documents');
 })->throws(PdfRenderingUnavailable::class);
+
+it('stores generated contents for the owner and makes the conversions', function () {
+    $this->travelTo(now()->setDate(2026, 11, 2));
+    $product = $this->createProduct();
+    $png = (string) file_get_contents($this->fakeImage()->getRealPath());
+
+    $upload = $product->addUploadFromContents($png, 'Fidget Studio.PNG', 'photos', public: true, meta: ['caption' => 'Studio'])->fresh();
+
+    expect($upload->path)->toBe('uploads/products/2026/11/fidget-studio.png')
+        ->and($upload->disk)->toBe('public')
+        ->and($upload->name)->toBe('Fidget Studio.PNG')
+        ->and($upload->mime_type)->toBe('image/png')
+        ->and($upload->size)->toBe(strlen($png))
+        ->and($upload->meta('caption'))->toBe('Studio')
+        ->and($upload->hasConversion('thumb'))->toBeTrue();
+
+    expect(Storage::disk('public')->get($upload->path))->toBe($png);
+});
+
+it('gives stored contents a free name and takes the mime type it is given', function () {
+    Queue::fake();
+    $product = $this->createProduct();
+
+    $first = $product->addUploadFromContents('solid cube', 'cube.stl');
+    $second = $product->addUploadFromContents('solid cube', 'cube.stl', mimeType: 'model/stl');
+
+    expect($second->path)->not->toBe($first->path)
+        ->and($second->path)->toEndWith('cube-2.stl')
+        ->and($first->mime_type)->toBe('text/plain')
+        ->and($second->mime_type)->toBe('model/stl')
+        ->and($second->disk)->toBe('local');
+    Queue::assertPushed(ProcessUpload::class, 2);
+});
+
+it('puts a new upload last, also after one in the middle was deleted', function () {
+    Queue::fake();
+    $product = $this->createProduct();
+    $first = $product->addUpload($this->fakeImage('a.png'), 'photos', public: true);
+    $middle = $product->addUpload($this->fakeImage('b.png'), 'photos', public: true);
+    $last = $product->addUpload($this->fakeImage('c.png'), 'photos', public: true);
+
+    $middle->delete();
+    $new = $product->addUpload($this->fakeImage('d.png'), 'photos', public: true);
+
+    expect($new->sort_order)->toBe(3)
+        ->and($product->uploadsIn('photos')->pluck('id')->all())->toBe([$first->id, $last->id, $new->id]);
+});
+
+it('marks a damaged image as processed without conversions instead of failing the job', function () {
+    Log::spy();
+    $product = $this->createProduct();
+
+    $upload = $product->addUpload(UploadedFile::fake()->create('broken.jpg', 10, 'image/jpeg'), 'photos', public: true)->fresh();
+
+    expect($upload->isProcessed())->toBeTrue()
+        ->and($upload->conversions)->toBeNull()
+        ->and($upload->thumbnailUrl())->toBe($upload->url());
+    Log::shouldHaveReceived('warning')->once()->withArgs(fn (string $message) => str_contains($message, 'cannot be processed'));
+});
+
+it('marks an empty PDF as processed without pages instead of failing the job', function () {
+    config()->set('uploads.pdf.driver', 'pdftoppm');
+
+    if (app(PdfRasterizer::class)->driver() !== 'pdftoppm') {
+        $this->markTestSkipped('This machine has no pdftoppm binary.');
+    }
+
+    Log::spy();
+    $product = $this->createProduct();
+
+    $upload = $product->addUpload(UploadedFile::fake()->create('empty.pdf', 0, 'application/pdf'), 'files')->fresh();
+
+    expect($upload->isProcessed())->toBeTrue()
+        ->and($upload->pageCount())->toBe(0);
+    Log::shouldHaveReceived('warning')->once();
+});

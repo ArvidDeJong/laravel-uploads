@@ -4,6 +4,24 @@ All notable changes to `darvis/laravel-uploads` are documented here. The format 
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-02
+
+### Added
+
+- `addUploadFromContents($contents, $name, $collection, $public, $meta, $mimeType)` on the `HasUploads` trait and the `UploadOwner` interface, and `StoreUpload::handleContents()`: store file contents that did not come from a form, such as a generated image or a downloaded PDF. The name gives the file name and extension; without a mime type it is detected from the contents.
+- `Upload::factory()`, with the states `public()`, `pdf()`, `video()` and `processed()`, for tests that need upload rows but no file on a disk.
+- `Upload::videos()` scope, next to `Upload::images()`.
+- `Darvis\Uploads\Exceptions\UnreadableFile`, thrown by the image converter and by the `pdftoppm` driver of the PDF rasterizer when the file itself is damaged or empty. With the `imagick` driver alone a damaged PDF still ends in `PdfRenderingUnavailable`, because Imagick does not tell a damaged file from a policy that forbids PDF.
+
+### Changed
+
+- `UploadOwner` declares `addUploadFromContents()`. Models that use the `HasUploads` trait get it for free; a class that implements the interface without the trait must add the method.
+- A damaged or empty image, or a PDF that `pdftoppm` cannot open, no longer fails the processing job: the upload is marked as processed without conversions, a warning is logged and the views keep showing the original. Before, the job failed three times, and with the queue on `sync` the request that stored the upload failed with it. A missing PDF driver still fails the job with `PdfRenderingUnavailable`.
+
+### Fixed
+
+- A new upload now comes last in its collection after an upload in the middle was deleted. Its `sort_order` was the number of uploads in the collection, which could equal the position of an existing upload; it is now one past the highest.
+
 ## [1.2.0] - 2026-11-02
 
 ### Added
