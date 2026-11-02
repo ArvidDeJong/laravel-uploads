@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="300" viewBox="0 0 960 300" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>How cropping works in darvis/laravel-uploads</title>
+  <desc>The editor draws a box on the original photo, the box is saved in meta.crop while the original file stays unchanged, and the queued job makes the thumbnails from the box.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
+    </marker>
+  </defs>
+  <rect width="960" height="300" rx="16" fill="#ffffff"/>
+  <text x="480" y="40" text-anchor="middle" font-size="20" font-weight="600" fill="#0f172a">Cropping: the original stays, the thumbnails follow the box</text>
+
+  <g font-size="14" fill="#0f172a">
+    <rect x="40" y="80" width="250" height="140" rx="12" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+    <text x="165" y="110" text-anchor="middle" font-weight="600">1. Draw a box</text>
+    <rect x="95" y="125" width="140" height="80" fill="#bfdbfe" stroke="#64748b"/>
+    <rect x="135" y="140" width="80" height="50" fill="none" stroke="#1d4ed8" stroke-width="3" stroke-dasharray="6 4"/>
+    <text x="165" y="245" text-anchor="middle" font-size="13" fill="#475569">Crop, then Save crop</text>
+
+    <rect x="355" y="80" width="250" height="140" rx="12" fill="#f0fdf4" stroke="#22c55e" stroke-width="2"/>
+    <text x="480" y="110" text-anchor="middle" font-weight="600">2. The box is saved</text>
+    <text x="480" y="140" text-anchor="middle">meta.crop =</text>
+    <text x="480" y="160" text-anchor="middle">x, y, width, height</text>
+    <text x="480" y="190" text-anchor="middle">original file: unchanged</text>
+    <text x="480" y="245" text-anchor="middle" font-size="13" fill="#475569">setCropArea()</text>
+
+    <rect x="670" y="80" width="250" height="140" rx="12" fill="#fefce8" stroke="#eab308" stroke-width="2"/>
+    <text x="795" y="110" text-anchor="middle" font-weight="600">3. New thumbnails</text>
+    <text x="795" y="140" text-anchor="middle">the queued job makes</text>
+    <text x="795" y="160" text-anchor="middle">thumb and preview</text>
+    <text x="795" y="180" text-anchor="middle">from the box only</text>
+    <text x="795" y="245" text-anchor="middle" font-size="13" fill="#475569">thumbnailUrl()</text>
+  </g>
+
+  <g stroke="#64748b" stroke-width="2" marker-end="url(#arrow)">
+    <line x1="292" y1="150" x2="351" y2="150"/>
+    <line x1="607" y1="150" x2="666" y2="150"/>
+  </g>
+</svg>

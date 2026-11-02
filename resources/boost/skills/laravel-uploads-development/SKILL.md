@@ -97,7 +97,15 @@ The job rewrites the `conversions` column; a conversion removed from the config 
 <livewire:uploads.uploads-overview />
 ```
 
-Upload manager parameters: `model`, `collection` (`files`), `public` (`false`), `accept` (extensions, also the validation), `ability` (`update`; checked on the model with `Gate::authorize()` when a policy exists for the model class; empty string skips it). It validates `file|max:<max_kilobytes>` per file, saves captions to `meta.caption`, sorts with Alpine's Sort plugin into `reorderUploads()`, soft deletes on remove, polls every five seconds while an upload is unprocessed, and dispatches the browser event `uploads-changed` with the collection. The overview authorizes `delete` on the upload for delete, restore and force delete and keeps its filters in the URL. Both need to be behind your own middleware; publish the views with `--tag=uploads-views`.
+Upload manager parameters: `model`, `collection` (`files`), `public` (`false`), `accept` (extensions, also the validation), `crop` (`false`; a Crop button per image with Cropper.js), `aspect-ratio` (`1`, `16/9`, `4:3`; empty for any shape), `ability` (`update`; checked on the model with `Gate::authorize()` when a policy exists for the model class; empty string skips it). It validates `file|max:<max_kilobytes>` per file, saves captions to `meta.caption`, sorts with Alpine's Sort plugin into `reorderUploads()`, soft deletes on remove, polls every five seconds while an upload is unprocessed, and dispatches the browser event `uploads-changed` with the collection. The overview authorizes `delete` on the upload for delete, restore and force delete and keeps its filters in the URL. Both need to be behind your own middleware; publish the views with `--tag=uploads-views`.
+
+## Cropping
+
+- `$upload->setCropArea(['x' => …, 'y' => …, 'width' => …, 'height' => …])` in pixels of the original: stored in `meta.crop` (`Upload::CROP`), rounded to whole pixels, `processed_at` set to null, `ProcessUpload` dispatched. The job passes the area to `ImageConverter` as the `crop` key of each conversion and cuts it out before `cover` or `scaleDown`. `setCropArea(null)` uses the whole image again; `cropArea()` reads it.
+- The original file is never touched, so cropping is always reversible. One area per upload, shared by every conversion; a `cover` conversion with another shape cuts its own shape out of the area.
+- Only images: `setCropArea()` throws `InvalidArgumentException` for other files and for an area without the four numbers, with a negative position or a size below 1. An area that reaches past an edge is kept inside the image.
+- The component loads Cropper.js 1.6 from `uploads.cropper.script` and `.style` with Livewire's `@assets`. Empty values mean the app loads it and sets `window.Cropper`; version 2 of Cropper.js has another API and does not work.
+- Cropper.js runs with `checkOrientation` and `checkCrossOrigin` off, so the original can come from a signed route or an S3 redirect without CORS; the browser and Intervention both apply the EXIF orientation, so the area matches.
 
 ## S3
 
@@ -128,6 +136,7 @@ The private bucket needs CORS for `PUT` and `POST` from the site's origin and a 
 - With original names (the default), a public file can be found by guessing its name. Keep `random` for public files that should not be found that way, such as quotes or contracts on the public disk.
 - With original names, two requests that store the same name in the same folder at the same moment can pick the same name. The second one overwrites the first file before its own row is refused by the unique index on `disk` and `path`, so the first upload then shows the second file. With `random` names this does not happen.
 - Never name a model method `uploadsModule()` for something else: the package calls it for the folder name.
+- Public conversion URLs carry `?v=<processed_at timestamp>`; a test that compares `conversionUrl()` with `Storage::disk()->url($path)` has to add it.
 
 ## Settings
 
@@ -136,6 +145,8 @@ Read them through `Darvis\Uploads\Support\UploadsConfig` (a singleton):
 | Accessor | Key | Env | Default |
 | --- | --- | --- | --- |
 | `conversions()`, `conversion($name)` | `conversions` | | `thumb`, `preview` |
+| `cropperScript()` | `cropper.script` | `UPLOADS_CROPPER_SCRIPT` | Cropper.js 1.6.2 on jsDelivr; null when empty |
+| `cropperStyle()` | `cropper.style` | `UPLOADS_CROPPER_STYLE` | Cropper.js 1.6.2 on jsDelivr; null when empty |
 | `privateDisk()` | `disks.private` | `UPLOADS_PRIVATE_DISK` | `local` |
 | `publicDisk()` | `disks.public` | `UPLOADS_PUBLIC_DISK` | `public` |
 | `fileNameMaxLength()` | `file_names.max_length` | `UPLOADS_FILE_NAME_MAX_LENGTH` | `20`, at least `8` |

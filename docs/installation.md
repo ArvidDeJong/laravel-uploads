@@ -101,6 +101,8 @@ Every key of `config/uploads.php`, in the order of the file. Read the values in 
 | Key | Env | Default | Meaning |
 | --- | --- | --- | --- |
 | `conversions` | | `thumb`, `preview` | Named image versions, see [Conversions & PDF pages](conversions-and-pdf.md) |
+| `cropper.script` | `UPLOADS_CROPPER_SCRIPT` | Cropper.js 1.6.2 on jsDelivr | Script the upload manager loads for `:crop="true"`; empty when your app loads Cropper.js itself, see [Cropping images](cropping.md) |
+| `cropper.style` | `UPLOADS_CROPPER_STYLE` | Cropper.js 1.6.2 on jsDelivr | Stylesheet of Cropper.js; empty when your app loads it |
 | `disks.private` | `UPLOADS_PRIVATE_DISK` | `local` | Disk for private uploads |
 | `disks.public` | `UPLOADS_PUBLIC_DISK` | `public` | Disk for public uploads |
 | `file_names.max_length` | `UPLOADS_FILE_NAME_MAX_LENGTH` | `20` | Longest stored file name, without extension; at least `8` |

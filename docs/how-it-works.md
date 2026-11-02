@@ -155,3 +155,4 @@ A valid link is not enough, though. The route also asks the *policy*, `UploadPol
 - [Tutorial: your first upload](tutorial.md) if you have not built the photo page yet.
 - [The Upload model](the-upload-model.md) for every column and method.
 - [Installation & configuration](installation.md) for every setting in `config/uploads.php`.
+- [Cropping images](cropping.md) to let editors choose which part of a photo the thumbnails show.

@@ -27,6 +27,8 @@ The texts go through `__()` with a Dutch translation in the package; set the app
 | `public` | `false` | Whether new uploads go to the public disk |
 | `accept` | empty | Comma separated extensions; used for the file input and the `extensions` validation rule |
 | `ability` | `update` | Ability checked on the model before anything changes; empty string to skip |
+| `crop` | `false` | A Crop button for every image, with Cropper.js; see [Cropping images](cropping.md) |
+| `aspect-ratio` | empty | Fixed shape of the crop area, such as `1`, `16/9` or `4:3`; empty for any shape |
 
 What it does:
 
@@ -35,12 +37,13 @@ What it does:
 - A caption field per upload, saved to `meta.caption` on blur.
 - Drag and drop sorting with Alpine's Sort plugin, which Livewire bundles; the new order is saved with `reorderUploads()`.
 - A remove button that soft deletes the upload after a confirm.
+- With `:crop="true"`, a Crop button per image that opens Cropper.js and saves the area with `setCropArea()`; the original file stays as it is.
 - It polls every five seconds while an upload in the list is not processed, so the thumbnails appear without a reload.
 - It dispatches the browser event `uploads-changed` with the collection after an upload or a removal, for a parent that shows a count or a cover.
 
 ### Authorization
 
-On mount and before every change the component calls `Gate::authorize($ability, $model)`, but only when a policy is registered for the model's class. Without a policy, anyone who can reach the page can upload, so put the component on pages that are already behind your own middleware, or register a policy for the model. The caption, reorder and delete actions only touch uploads of the model's own collection; an id from another model is ignored.
+On mount and before every change the component calls `Gate::authorize($ability, $model)`, but only when a policy is registered for the model's class. Without a policy, anyone who can reach the page can upload, so put the component on pages that are already behind your own middleware, or register a policy for the model. The caption, reorder, crop and delete actions only touch uploads of the model's own collection; an id from another model is ignored.
 
 ## Uploads overview
 

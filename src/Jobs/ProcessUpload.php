@@ -86,9 +86,12 @@ class ProcessUpload implements ShouldQueue
                 $source = $pages[0] ?? null;
             }
 
+            // The crop area is measured on the image itself, so it does not apply to PDF pages.
+            $crop = $upload->isImage() ? $upload->cropArea() : null;
+
             if ($source !== null) {
                 foreach ($config->conversions() as $name => $conversion) {
-                    [$binary, $extension] = $converter->make($source, $conversion);
+                    [$binary, $extension] = $converter->make($source, $crop === null ? $conversion : $conversion + ['crop' => $crop]);
 
                     $path = $this->generatedPath($upload, (string) $name, $extension);
                     $disk->put($path, $binary);

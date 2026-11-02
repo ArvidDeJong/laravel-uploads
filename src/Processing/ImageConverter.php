@@ -22,9 +22,10 @@ class ImageConverter
     }
 
     /**
-     * Resize and encode a local image file as the conversion describes.
+     * Resize and encode a local image file as the conversion describes. With a `crop` area
+     * (`x`, `y`, `width`, `height` in pixels of the original) only that part is used.
      *
-     * @param  array{fit?: string, format?: string, height?: int|null, quality?: int, width?: int|null}  $conversion
+     * @param  array{crop?: array{x: int, y: int, width: int, height: int}|null, fit?: string, format?: string, height?: int|null, quality?: int, width?: int|null}  $conversion
      * @return array{0: string, 1: string} The encoded image and its file extension.
      */
     public function make(string $sourcePath, array $conversion): array
@@ -35,6 +36,11 @@ class ImageConverter
         $quality = max(1, min(100, (int) ($conversion['quality'] ?? 85)));
 
         $image = $this->manager()->read($sourcePath);
+
+        if (isset($conversion['crop'])) {
+            $image = $this->crop($image, $conversion['crop']);
+        }
+
         $image = $this->fit($image, $conversion['fit'] ?? 'contain', $width, $height);
 
         $encoded = $image->encodeByExtension($format, quality: $quality);
@@ -50,6 +56,21 @@ class ImageConverter
     public function extensionFor(array $conversion): string
     {
         return $this->format($conversion['format'] ?? 'jpg');
+    }
+
+    /**
+     * Cut the area out of the image, kept inside the image when it reaches past an edge.
+     *
+     * @param  array{x: int, y: int, width: int, height: int}  $area
+     */
+    protected function crop(ImageInterface $image, array $area): ImageInterface
+    {
+        $x = max(0, min($image->width() - 1, $area['x']));
+        $y = max(0, min($image->height() - 1, $area['y']));
+        $width = max(1, min($image->width() - $x, $area['width']));
+        $height = max(1, min($image->height() - $y, $area['height']));
+
+        return $image->crop($width, $height, $x, $y);
     }
 
     protected function fit(ImageInterface $image, string $fit, ?int $width, ?int $height): ImageInterface

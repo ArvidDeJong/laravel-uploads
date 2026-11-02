@@ -24,7 +24,7 @@ Laravel developers who want files attached to their own models with as little ce
 
 - It does not resize on the fly. Conversions are generated once by a queued job and stored next to the original; add a conversion to the config and run the job again for existing uploads, see [Conversions & PDF pages](conversions-and-pdf.md#adding-a-conversion-later).
 - It does not serve images through PHP for public uploads; those are plain URLs of the disk.
-- It does not ship a file picker, a cropper or a drag and drop zone; the Livewire upload manager is a file input with a list, see [Livewire components](livewire.md).
+- It does not ship a file picker or a drag and drop zone; the Livewire upload manager is a file input with a list, see [Livewire components](livewire.md). Cropping is optional and never changes the original, see [Cropping images](cropping.md).
 - It does not render Word or Excel documents; only images and PDF files get conversions.
 
 ## Requirements
@@ -67,6 +67,7 @@ Then follow [Installation & configuration](installation.md) to check that it wor
 - [Conversions & PDF pages](conversions-and-pdf.md): how thumbnails and page images are made and shown
 - [Private files](private-files.md): signed links, the policy, S3 and downloads
 - [Livewire components](livewire.md): the upload manager and the overview
+- [Cropping images](cropping.md): let editors choose which part of a photo the thumbnails show
 - [Administration & trash](administration.md): statistics, soft delete, hard delete and pruning
 - [Testing](testing.md): test your own code around uploads without touching the real disks
 - [Troubleshooting](troubleshooting.md): error messages and symptoms, with cause and fix

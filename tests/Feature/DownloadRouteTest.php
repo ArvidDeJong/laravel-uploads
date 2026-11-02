@@ -14,7 +14,7 @@ it('gives a public upload the permanent URL of the disk', function () {
     $upload = $product->addUpload($this->fakeImage(), 'photos', public: true)->fresh();
 
     expect($upload->url())->toBe(Storage::disk('public')->url($upload->path))
-        ->and($upload->conversionUrl('thumb'))->toBe(Storage::disk('public')->url($upload->conversionPath('thumb')))
+        ->and($upload->conversionUrl('thumb'))->toBe(Storage::disk('public')->url($upload->conversionPath('thumb')).'?v='.$upload->processed_at->getTimestamp())
         ->and($upload->url())->not->toContain('signature=');
 });
 

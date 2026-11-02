@@ -36,6 +36,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cropper
+    |--------------------------------------------------------------------------
+    |
+    | The upload manager can crop images with Cropper.js when you pass
+    | `:crop="true"`. The original file is never changed: the crop area is
+    | kept in `meta.crop` and the conversions are made from that area. The
+    | `script` and `style` of Cropper.js 1.6 are loaded once per page from
+    | these URLs. Set both to an empty string when your app loads Cropper.js
+    | itself, for example from npm, and makes `window.Cropper` available.
+    |
+    */
+
+    'cropper' => [
+        'script' => env('UPLOADS_CROPPER_SCRIPT', 'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js'),
+        'style' => env('UPLOADS_CROPPER_STYLE', 'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Disks
     |--------------------------------------------------------------------------
     |

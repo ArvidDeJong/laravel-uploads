@@ -2,6 +2,7 @@
 
 namespace Darvis\Uploads\Models;
 
+use Darvis\Uploads\Jobs\ProcessUpload;
 use Darvis\Uploads\Support\UploadsConfig;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -47,6 +48,11 @@ class Upload extends Model
      * The key under `conversions` that holds the rendered PDF pages.
      */
     public const PAGES = 'pages';
+
+    /**
+     * The key under `meta` that holds the crop area of an image.
+     */
+    public const CROP = 'crop';
 
     protected $fillable = [
         'uploadable_type',
@@ -298,6 +304,76 @@ class Upload extends Model
     }
 
     /**
+     * The part of the image the conversions are made from, in pixels of the original;
+     * null when the whole image is used.
+     *
+     * @return array{x: int, y: int, width: int, height: int}|null
+     */
+    public function cropArea(): ?array
+    {
+        $area = $this->meta(self::CROP);
+
+        return is_array($area) ? static::normalizeCropArea($area) : null;
+    }
+
+    /**
+     * Keep only this part of the image for the conversions and make them again. The original
+     * file is not changed, so null brings back the whole image.
+     *
+     * @param  array<string, mixed>|null  $area  `x`, `y`, `width` and `height` in pixels of the original.
+     */
+    public function setCropArea(?array $area): static
+    {
+        if (! $this->isImage()) {
+            throw new \InvalidArgumentException("Upload [{$this->getKey()}] is not an image and cannot be cropped.");
+        }
+
+        $normalized = $area === null ? null : static::normalizeCropArea($area);
+
+        if ($area !== null && $normalized === null) {
+            throw new \InvalidArgumentException('A crop area needs a numeric x and y of at least 0 and a width and height of at least 1.');
+        }
+
+        $meta = $this->meta ?? [];
+        data_set($meta, self::CROP, $normalized);
+        $this->meta = $meta;
+        $this->processed_at = null;
+        $this->save();
+
+        ProcessUpload::dispatchFor($this);
+
+        return $this;
+    }
+
+    /**
+     * Whole pixels, or null when a value is missing or out of range.
+     *
+     * @param  array<string, mixed>  $area
+     * @return array{x: int, y: int, width: int, height: int}|null
+     */
+    protected static function normalizeCropArea(array $area): ?array
+    {
+        foreach (['x', 'y', 'width', 'height'] as $key) {
+            if (! isset($area[$key]) || ! is_numeric($area[$key])) {
+                return null;
+            }
+        }
+
+        $normalized = [
+            'x' => (int) round((float) $area['x']),
+            'y' => (int) round((float) $area['y']),
+            'width' => (int) round((float) $area['width']),
+            'height' => (int) round((float) $area['height']),
+        ];
+
+        if ($normalized['x'] < 0 || $normalized['y'] < 0 || $normalized['width'] < 1 || $normalized['height'] < 1) {
+            return null;
+        }
+
+        return $normalized;
+    }
+
+    /**
      * Write one key in `meta` and save.
      */
     public function setMeta(string $key, mixed $value): static
@@ -338,7 +414,15 @@ class Upload extends Model
                 ? ($this->conversionPath($conversion) ?? $this->path)
                 : ($page !== null ? ($this->pagePaths()[$page - 1] ?? $this->path) : $this->path);
 
-            return Storage::disk($this->disk)->url($path);
+            $url = Storage::disk($this->disk)->url($path);
+
+            // A conversion keeps its path when it is made again, after a new crop for example,
+            // so the time of processing tells browsers and CDNs that the file changed.
+            if ($conversion !== null && $path !== $this->path && $this->processed_at !== null) {
+                $url .= (str_contains($url, '?') ? '&' : '?').'v='.$this->processed_at->getTimestamp();
+            }
+
+            return $url;
         }
 
         $parameters = array_filter([

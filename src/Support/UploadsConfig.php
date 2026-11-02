@@ -39,6 +39,26 @@ class UploadsConfig
     }
 
     /**
+     * URL of the Cropper.js script; null when the host app loads it itself.
+     */
+    public function cropperScript(): ?string
+    {
+        $url = $this->config->get('uploads.cropper.script');
+
+        return is_string($url) && $url !== '' ? $url : null;
+    }
+
+    /**
+     * URL of the Cropper.js stylesheet; null when the host app loads it itself.
+     */
+    public function cropperStyle(): ?string
+    {
+        $url = $this->config->get('uploads.cropper.style');
+
+        return is_string($url) && $url !== '' ? $url : null;
+    }
+
+    /**
      * The disk for uploads that are only reachable through the signed route.
      */
     public function privateDisk(): string

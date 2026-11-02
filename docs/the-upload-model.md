@@ -46,7 +46,7 @@ Upload::withTrashed();   // the usual soft delete scopes
 | --- | --- |
 | `url()` | The original: the disk URL for a public upload, a signed link for a private one |
 | `downloadUrl()` | The same, but a private link forces a download with the original name |
-| `conversionUrl('thumb')` | The conversion, or the original while it does not exist yet |
+| `conversionUrl('thumb')` | The conversion, or the original while it does not exist yet. On the public disk it ends with `?v=<time of processing>`, so browsers fetch a conversion again after it was remade |
 | `thumbnailUrl()` | `conversionUrl('thumb')` |
 | `pageUrl(2)` | A rendered PDF page, or `null` when that page was not rendered |
 
@@ -79,6 +79,18 @@ $upload->setMeta('approved', true);        // writes and saves
 ```
 
 Add a real column in your own migration only when you have to filter or sort on the value; everything else belongs in `meta`.
+
+## Cropping
+
+An image can keep a crop area: the part of the original the conversions are made from. The original file is not changed. See [Cropping images](cropping.md).
+
+```php
+$upload->setCropArea(['x' => 100, 'y' => 50, 'width' => 800, 'height' => 450]); // saves and remakes the conversions
+$upload->cropArea();         // the area in whole pixels, or null
+$upload->setCropArea(null);  // the whole image again
+```
+
+The area is kept in `meta` under `crop` (`Upload::CROP`). `setCropArea()` sets `processed_at` to `null` and dispatches `ProcessUpload`. It throws an `InvalidArgumentException` for an upload that is not an image and for an area without `x`, `y`, `width` and `height`, with a negative position or a size below 1.
 
 ## The HasUploads trait
 

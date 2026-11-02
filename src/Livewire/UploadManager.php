@@ -17,6 +17,9 @@ use Livewire\WithFileUploads;
  * Upload, caption, sort and remove the uploads of one collection of a model.
  *
  * <livewire:uploads.upload-manager :model="$product" collection="photos" :public="true" accept="jpg,jpeg,png,webp" />
+ *
+ * With `:crop="true"` every image gets a Crop button that opens Cropper.js; `aspect-ratio="16/9"`
+ * fixes the shape of the crop area.
  */
 class UploadManager extends Component
 {
@@ -42,6 +45,16 @@ class UploadManager extends Component
      * Ability on the model that is checked before anything changes; empty to skip the check.
      */
     public string $ability = 'update';
+
+    /**
+     * Whether images can be cropped with Cropper.js.
+     */
+    public bool $crop = false;
+
+    /**
+     * Fixed shape of the crop area, such as `16/9`, `4:3` or `1`; empty for a free shape.
+     */
+    public string $aspectRatio = '';
 
     /**
      * Files picked in the file input, stored on save.
@@ -112,6 +125,40 @@ class UploadManager extends Component
         $this->model->reorderUploads($this->collection, $ids);
     }
 
+    /**
+     * Keep the given area of an image for its conversions; the original stays as it is.
+     *
+     * @param  array<string, mixed>  $area  `x`, `y`, `width` and `height` in pixels of the original.
+     */
+    public function saveCrop(int $id, array $area): void
+    {
+        $this->authorizeModel();
+
+        $upload = $this->croppable($id);
+
+        try {
+            $upload?->setCropArea($area);
+        } catch (\InvalidArgumentException) {
+            $this->addError('crop', __('The crop area is not valid.'));
+
+            return;
+        }
+
+        $this->dispatch('uploads-changed', collection: $this->collection);
+    }
+
+    /**
+     * Use the whole image again for the conversions.
+     */
+    public function resetCrop(int $id): void
+    {
+        $this->authorizeModel();
+
+        $this->croppable($id)?->setCropArea(null);
+
+        $this->dispatch('uploads-changed', collection: $this->collection);
+    }
+
     public function delete(int $id): void
     {
         $this->authorizeModel();
@@ -126,9 +173,14 @@ class UploadManager extends Component
     {
         $uploads = $this->uploads();
 
+        $config = app(UploadsConfig::class);
+
         return view('uploads::livewire.upload-manager', [
             'uploads' => $uploads,
             'processing' => $uploads->contains(fn (Upload $upload): bool => ! $upload->isProcessed()),
+            'cropRatio' => $this->cropRatio(),
+            'cropperScript' => $config->cropperScript(),
+            'cropperStyle' => $config->cropperStyle(),
         ]);
     }
 
@@ -138,6 +190,38 @@ class UploadManager extends Component
     protected function uploads()
     {
         return $this->model->uploadsIn($this->collection)->get();
+    }
+
+    /**
+     * An image of this collection when cropping is on; null otherwise.
+     */
+    protected function croppable(int $id): ?Upload
+    {
+        if (! $this->crop) {
+            return null;
+        }
+
+        $upload = $this->uploads()->firstWhere((new Upload)->getKeyName(), $id);
+
+        return $upload?->isImage() ? $upload : null;
+    }
+
+    /**
+     * The aspect ratio as a number, from `16/9`, `16:9` or `1.5`; null for a free shape.
+     */
+    protected function cropRatio(): ?float
+    {
+        $parts = preg_split('#\s*[/:]\s*#', trim($this->aspectRatio)) ?: [];
+
+        if (count($parts) === 2 && is_numeric($parts[0]) && is_numeric($parts[1]) && (float) $parts[1] > 0) {
+            $ratio = (float) $parts[0] / (float) $parts[1];
+        } elseif (count($parts) === 1 && is_numeric($parts[0])) {
+            $ratio = (float) $parts[0];
+        } else {
+            return null;
+        }
+
+        return $ratio > 0 ? $ratio : null;
     }
 
     protected function authorizeModel(): void

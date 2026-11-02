@@ -31,5 +31,12 @@
     "Delete for good": "Definitief verwijderen",
     "Delete this file for good? The files are removed too.": "Dit bestand definitief verwijderen? De bestanden op de disk gaan ook weg.",
     "Move this file to the trash?": "Dit bestand naar de prullenbak verplaatsen?",
-    "No files found.": "Geen bestanden gevonden."
+    "No files found.": "Geen bestanden gevonden.",
+    "Crop": "Bijsnijden",
+    "Cropped": "Bijgesneden",
+    "Crop the image": "Afbeelding bijsnijden",
+    "Cancel": "Annuleren",
+    "Use the whole image": "Hele afbeelding gebruiken",
+    "Save crop": "Uitsnede opslaan",
+    "The crop area is not valid.": "De uitsnede is niet geldig."
 }

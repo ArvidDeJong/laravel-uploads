@@ -100,6 +100,7 @@ Full documentation: **https://arviddejong.github.io/laravel-uploads/**
 | [Conversions & PDF pages](https://arviddejong.github.io/laravel-uploads/conversions-and-pdf.html) | Thumbnails from config, the job, PDF drivers |
 | [Private files](https://arviddejong.github.io/laravel-uploads/private-files.html) | Signed links, the policy, S3 with two buckets |
 | [Livewire components](https://arviddejong.github.io/laravel-uploads/livewire.html) | The upload manager and the overview |
+| [Cropping images](https://arviddejong.github.io/laravel-uploads/cropping.html) | Choose which part of a photo the thumbnails show, with Cropper.js |
 | [Administration & trash](https://arviddejong.github.io/laravel-uploads/administration.html) | Soft delete, hard delete, pruning, statistics |
 | [Testing](https://arviddejong.github.io/laravel-uploads/testing.html) | Test your own code around uploads |
 | [Troubleshooting](https://arviddejong.github.io/laravel-uploads/troubleshooting.html) | Error messages and symptoms with cause and fix |

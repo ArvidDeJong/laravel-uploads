@@ -4,6 +4,19 @@ All notable changes to `darvis/laravel-uploads` are documented here. The format 
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-02
+
+### Added
+
+- Cropping images in the upload manager with Cropper.js: `:crop="true"` adds a Crop button per image, `aspect-ratio="16/9"` fixes the shape. The original file is never changed; the area is kept in `meta.crop` and the conversions are made from it.
+- `Upload::setCropArea()`, `Upload::cropArea()` and the constant `Upload::CROP` to crop from your own code. `setCropArea(null)` uses the whole image again.
+- `cropper.script` and `cropper.style` (`UPLOADS_CROPPER_SCRIPT`, `UPLOADS_CROPPER_STYLE`): where Cropper.js 1.6.2 is loaded from, jsDelivr by default. Set both to empty to load it from your own bundle.
+- Documentation: a "Cropping images" page for developers new to the package.
+
+### Changed
+
+- The URL of a conversion on the public disk now ends with `?v=<time of processing>`, so browsers and CDNs fetch a conversion again after it was made again. Update tests that compare `conversionUrl()` with `Storage::url()`. Republish the views if you published `upload-manager.blade.php` and want the Crop button.
+
 ## [1.1.0] - 2026-11-02
 
 ### Added

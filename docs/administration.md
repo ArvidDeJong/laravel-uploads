@@ -1,7 +1,7 @@
 ---
 title: "Administration & trash"
 description: "Soft delete, restore, hard delete and the uploads:prune command; what happens to the files at each step; UploadStatistics for totals per disk and collection; building your own overview."
-nav_order: 10
+nav_order: 11
 ---
 
 # Administration & trash

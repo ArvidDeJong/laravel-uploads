@@ -1,7 +1,7 @@
 ---
 title: "Troubleshooting"
 description: "Error messages and symptoms with cause and fix: 419 and failed uploads in a form, no thumbnails, PdfRenderingUnavailable, 403 on a private link, a broken public image, ACL errors on S3, Livewire upload problems."
-nav_order: 12
+nav_order: 13
 ---
 
 # Troubleshooting

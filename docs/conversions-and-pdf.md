@@ -67,7 +67,7 @@ While the job has not run yet, `conversionUrl()` returns the original, so a gall
 
 ## The job
 
-`Darvis\Uploads\Jobs\ProcessUpload` is dispatched by `StoreUpload` on the connection and queue from `uploads.queue`. It copies the original to a temporary file, renders the PDF pages when the upload is a PDF, makes every conversion, writes everything to the disk, fills `conversions` and `processed_at`, removes the temporary files and dispatches `Darvis\Uploads\Events\UploadProcessed`. A file that is neither an image nor a PDF only gets `processed_at`.
+`Darvis\Uploads\Jobs\ProcessUpload` is dispatched by `StoreUpload` on the connection and queue from `uploads.queue`. It copies the original to a temporary file, renders the PDF pages when the upload is a PDF, makes every conversion (from the crop area only when the image has one, see [Cropping images](cropping.md)), writes everything to the disk, fills `conversions` and `processed_at`, removes the temporary files and dispatches `Darvis\Uploads\Events\UploadProcessed`. A file that is neither an image nor a PDF only gets `processed_at`.
 
 The job tries three times. When it keeps failing, the upload stays with `processed_at = null` and the site keeps showing the original; look at `failed_jobs` for the reason.
 
