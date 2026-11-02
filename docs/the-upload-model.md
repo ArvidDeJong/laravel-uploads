@@ -14,7 +14,7 @@ nav_order: 6
 | `user_id` | The user who uploaded it, from `auth()->id()` at the time |
 | `collection` | The group the file is in: `photos`, `files`, `attachments`, any name you choose |
 | `disk` | The disk the file is on, copied from the config when it was stored |
-| `path` | The path on that disk: `<prefix>/<models>/<id>/<collection>/<uuid>.<ext>` |
+| `path` | The path on that disk, by default `uploads/<module>/<year>/<month>/<name>.<ext>`; it never changes after the file is stored |
 | `name` | The original file name, used for downloads |
 | `mime_type`, `size` | As detected when the file was stored; `size` in bytes |
 | `is_public` | Which disk it went to and what kind of URL it gets |

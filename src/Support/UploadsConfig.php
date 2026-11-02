@@ -63,6 +63,22 @@ class UploadsConfig
     }
 
     /**
+     * The longest stored file name in characters, without the extension; at least 8.
+     */
+    public function fileNameMaxLength(): int
+    {
+        return max(8, (int) $this->config->get('uploads.file_names.max_length', 20));
+    }
+
+    /**
+     * `original` for the original name as a slug, `random` for a random name.
+     */
+    public function fileNameStrategy(): string
+    {
+        return (string) $this->config->get('uploads.file_names.strategy', 'original') === 'random' ? 'random' : 'original';
+    }
+
+    /**
      * Minutes a signed download link stays valid.
      */
     public function linkExpiresAfterMinutes(): int
@@ -79,11 +95,20 @@ class UploadsConfig
     }
 
     /**
+     * Folders below the prefix, with the placeholders `{module}`, `{id}`, `{collection}`,
+     * `{year}`, `{month}` and `{day}`.
+     */
+    public function pathPattern(): string
+    {
+        return trim((string) $this->config->get('uploads.path_pattern', '{module}/{year}/{month}'), '/');
+    }
+
+    /**
      * Folder on the disk under which every upload is stored; empty for the disk root.
      */
     public function pathPrefix(): string
     {
-        return trim((string) $this->config->get('uploads.path_prefix', ''), '/');
+        return trim((string) $this->config->get('uploads.path_prefix', 'uploads'), '/');
     }
 
     public function pdfDpi(): int

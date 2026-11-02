@@ -262,22 +262,22 @@ Try the checks as well: press Upload without a photo, or pick a text file. The p
 
 ## Step 7. Look at what was stored
 
-Open the folder `storage/app/public/products/1/photos`. For one photo you will find three files:
+Open the folder `storage/app/public/uploads/products`. It has a folder for the year and in it one for the month, for example `2026/11`. For one photo you will find three files:
 
 ```text
-7131d4ec-e520-4129-b964-05a803fde311.jpg           the original
-7131d4ec-e520-4129-b964-05a803fde311-thumb.webp    300 × 300, cropped
-7131d4ec-e520-4129-b964-05a803fde311-preview.webp  1200 wide
+lamp.jpg           the original
+lamp-thumb.webp    300 × 300, cropped
+lamp-preview.webp  1200 wide
 ```
 
-The long name is a random *uuid*, so two files called `photo.jpg` never overwrite each other; the original name is kept in the database. Look at the row in tinker:
+The file keeps its own name, in lower case and without spaces. Upload `lamp.jpg` a second time and it becomes `lamp-2.jpg`, so files never overwrite each other; the name as it was uploaded is kept in the database. [Where the files are stored](how-it-works.md#where-the-files-are-stored) explains the folders and how to use random names instead. Look at the row in tinker:
 
 ```php
 $photo = App\Models\Product::find(1)->firstUpload('photos');
 
 $photo->name;          // "lamp.jpg", the original file name
 $photo->collection;    // "photos"
-$photo->conversions;   // ["thumb" => "products/1/photos/...-thumb.webp", "preview" => "products/1/photos/...-preview.webp"]
+$photo->conversions;   // ["thumb" => "uploads/products/2026/11/...-thumb.webp", "preview" => "uploads/products/2026/11/...-preview.webp"]
 $photo->meta('caption'); // the caption, or null when you left it empty
 ```
 

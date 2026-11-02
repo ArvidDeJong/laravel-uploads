@@ -37,7 +37,7 @@ $print = $product->addUpload($request->file('print'), 'files', meta: [
 ]);
 ```
 
-Each call stores the file as `products/<id>/<collection>/<uuid>.<ext>`, writes a row to `uploads` and queues a job that makes the configured conversions. The original file name is kept in `name`.
+Each call stores the file as `uploads/products/<year>/<month>/<original name>.<ext>`, writes a row to `uploads` and queues a job that makes the configured conversions. The original file name is kept in `name`.
 
 ## 3. The gallery
 

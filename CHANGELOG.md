@@ -4,6 +4,19 @@ All notable changes to `darvis/laravel-uploads` are documented here. The format 
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-02
+
+### Added
+
+- `path_pattern` (`UPLOADS_PATH_PATTERN`): the folders below `path_prefix`, with the placeholders `{module}`, `{id}`, `{collection}`, `{year}`, `{month}` and `{day}`. `{module}` is the owning model in plural, the collection for an upload without owner.
+- `uploadsModule()` on the `HasUploads` trait: override it to give a model its own folder name, for example `news` for `NewsItem`.
+- `file_names.max_length` (`UPLOADS_FILE_NAME_MAX_LENGTH`, default `20`, at least `8`) and `file_names.strategy` (`UPLOADS_FILE_NAME_STRATEGY`, `original` or `random`). `original` keeps the original name as a slug, cut to the maximum length after the last whole word; `random` gives lower-case letters and digits; a name that is taken in the folder, by any upload or by a file on the disk, gets `-2`, `-3` and so on.
+- Documentation: "Where the files are stored" on the How it works page, with the recommended layout.
+
+### Changed
+
+- New uploads are stored as `uploads/<module>/<year>/<month>/<original name>.<ext>`, for example `uploads/products/2026/11/front.jpg`, instead of `<models>/<id>/<collection>/<uuid>.<ext>`. Public files can now be found by guessing their name; set `UPLOADS_FILE_NAME_STRATEGY=random` when that matters. The default of `path_prefix` is now `uploads`. Existing uploads keep their path and keep working. To keep the old folders, set `path_pattern` to `{module}/{id}/{collection}` and `path_prefix` to an empty string.
+
 ## [1.0.1] - 2026-10-30
 
 ### Added

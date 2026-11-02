@@ -103,9 +103,12 @@ Every key of `config/uploads.php`, in the order of the file. Read the values in 
 | `conversions` | | `thumb`, `preview` | Named image versions, see [Conversions & PDF pages](conversions-and-pdf.md) |
 | `disks.private` | `UPLOADS_PRIVATE_DISK` | `local` | Disk for private uploads |
 | `disks.public` | `UPLOADS_PUBLIC_DISK` | `public` | Disk for public uploads |
+| `file_names.max_length` | `UPLOADS_FILE_NAME_MAX_LENGTH` | `20` | Longest stored file name, without extension; at least `8` |
+| `file_names.strategy` | `UPLOADS_FILE_NAME_STRATEGY` | `original` | The `original` name as a slug, or `random` letters and digits |
 | `link_expires_after_minutes` | `UPLOADS_LINK_EXPIRES_AFTER_MINUTES` | `30` | Lifetime of a signed link to a private upload |
 | `max_kilobytes` | `UPLOADS_MAX_KILOBYTES` | `512000` | Largest file the Livewire upload manager accepts |
-| `path_prefix` | `UPLOADS_PATH_PREFIX` | empty | Folder on the disk above the model folders |
+| `path_pattern` | `UPLOADS_PATH_PATTERN` | `{module}/{year}/{month}` | Folders below the prefix, see [Where the files are stored](how-it-works.md#where-the-files-are-stored) |
+| `path_prefix` | `UPLOADS_PATH_PREFIX` | `uploads` | Folder on the disk above the pattern; empty for the root of the disk |
 | `pdf.dpi` | | `110` | Resolution of the rendered pages |
 | `pdf.driver` | `UPLOADS_PDF_DRIVER` | `auto` | `imagick`, `pdftoppm` or `auto` |
 | `pdf.format` | | `jpg` | `jpg` or `png` for the pages |

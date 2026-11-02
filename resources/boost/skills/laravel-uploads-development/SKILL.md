@@ -12,7 +12,7 @@ Use this skill when code stores or shows files in an application that has `darvi
 ## How a file flows through the package
 
 1. `$model->addUpload(UploadedFile $file, string $collection = 'files', bool $public = false, array $meta = [])` on a model with the `HasUploads` trait, or `app(StoreUpload::class)->handle($file, $collection, $public, $meta, $owner, $userId)` for an upload without owner or with an explicit uploader.
-2. `StoreUpload` picks the disk (`uploads.disks.public` or `.private`), builds `<path_prefix>/<models>/<id>/<collection>/<uuid>.<ext>` (`uploads/<collection>` without owner), stores with `storeAs()`, creates the `Upload` row (`user_id` from `auth()->id()`, `sort_order` the next number in that collection, `meta` as given) and dispatches `ProcessUpload::dispatchFor($upload)` on the connection and queue from `uploads.queue`.
+2. `StoreUpload` picks the disk (`uploads.disks.public` or `.private`), builds the folder `<path_prefix>/<path_pattern>` (default `uploads/{module}/{year}/{month}`; `{module}` is the owner's `uploadsModule()`, by default the model name in plural, or the collection without owner; `{id}`, `{collection}` and `{day}` exist too), picks a file name of at most `file_names.max_length` characters (the `original` name as a slug by default, or `random` lower-case letters and digits, with `-2`, `-3` when that name is taken in the folder by any upload, the trash included, or by a file on the disk), stores with `storeAs()`, creates the `Upload` row (`user_id` from `auth()->id()`, `sort_order` the next number in that collection, `meta` as given) and dispatches `ProcessUpload::dispatchFor($upload)` on the connection and queue from `uploads.queue`.
 3. `ProcessUpload` copies the original to a temp file. For a PDF it renders up to `pdf.max_pages` pages with `PdfRasterizer` (Imagick or `pdftoppm`) and stores them as `<basename>-page-<n>.<format>`. For an image, or the first page of a PDF, it makes every conversion from `uploads.conversions` with `ImageConverter` and stores them as `<basename>-<name>.<format>`. It writes the paths into `conversions` (`pages` is the key for the pages), sets `processed_at` and dispatches `UploadProcessed`. A file that is neither image nor PDF only gets `processed_at`.
 4. `url()`, `conversionUrl()`, `thumbnailUrl()`, `pageUrl()` and `downloadUrl()` return the disk URL for a public upload and a temporary signed URL to `uploads.show` for a private one, with `conversion`, `page` and `download` as signed query parameters.
 5. `uploads.show` authorizes `view` through the policy, resolves the path, and streams the file (local disks, inline, or as attachment with `?download=1`) or redirects to `temporaryUrl()` of the disk (S3), valid for `temporary_url_minutes`.
@@ -124,6 +124,10 @@ The private bucket needs CORS for `PUT` and `POST` from the site's origin and a 
 - The route prefix and middleware are read when the routes are registered; changing them at runtime does nothing.
 - Deleting the owning model leaves its uploads in place, with `uploadable` resolving to `null`.
 - `Number::fileSize()` is used for `humanSize()`, so the format follows Laravel (`1.0 KB`, `2.3 MB`).
+- Never build a path from the settings to find a file: the folder (`{year}`, `{month}`) is the moment of the upload and the settings may have changed since. Always use `$upload->path`, `conversionPath()` or the URL methods.
+- With original names (the default), a public file can be found by guessing its name. Keep `random` for public files that should not be found that way, such as quotes or contracts on the public disk.
+- With original names, two requests that store the same name in the same folder at the same moment can pick the same name. The second one overwrites the first file before its own row is refused by the unique index on `disk` and `path`, so the first upload then shows the second file. With `random` names this does not happen.
+- Never name a model method `uploadsModule()` for something else: the package calls it for the folder name.
 
 ## Settings
 
@@ -134,9 +138,12 @@ Read them through `Darvis\Uploads\Support\UploadsConfig` (a singleton):
 | `conversions()`, `conversion($name)` | `conversions` | | `thumb`, `preview` |
 | `privateDisk()` | `disks.private` | `UPLOADS_PRIVATE_DISK` | `local` |
 | `publicDisk()` | `disks.public` | `UPLOADS_PUBLIC_DISK` | `public` |
+| `fileNameMaxLength()` | `file_names.max_length` | `UPLOADS_FILE_NAME_MAX_LENGTH` | `20`, at least `8` |
+| `fileNameStrategy()` | `file_names.strategy` | `UPLOADS_FILE_NAME_STRATEGY` | `original` (or `random`) |
 | `linkExpiresAfterMinutes()` | `link_expires_after_minutes` | `UPLOADS_LINK_EXPIRES_AFTER_MINUTES` | `30` |
 | `maxKilobytes()` | `max_kilobytes` | `UPLOADS_MAX_KILOBYTES` | `512000` |
-| `pathPrefix()` | `path_prefix` | `UPLOADS_PATH_PREFIX` | empty |
+| `pathPattern()` | `path_pattern` | `UPLOADS_PATH_PATTERN` | `{module}/{year}/{month}` |
+| `pathPrefix()` | `path_prefix` | `UPLOADS_PATH_PREFIX` | `uploads` |
 | `pdfDpi()` | `pdf.dpi` | | `110` |
 | `pdfDriver()` | `pdf.driver` | `UPLOADS_PDF_DRIVER` | `auto` |
 | `pdfFormat()` | `pdf.format` | | `jpg` |

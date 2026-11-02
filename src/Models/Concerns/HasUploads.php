@@ -7,6 +7,7 @@ use Darvis\Uploads\Models\Upload;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
 
 /**
  * Give a model named collections of uploads.
@@ -41,6 +42,17 @@ trait HasUploads
     public function firstUpload(string $collection = 'files'): ?Upload
     {
         return $this->uploadsIn($collection)->first();
+    }
+
+    /**
+     * The folder of this model's uploads, the `{module}` of the path pattern. Override it
+     * to store, for example, the uploads of `NewsItem` under `news` instead of `news-items`.
+     *
+     * @return string
+     */
+    public function uploadsModule()
+    {
+        return Str::plural(Str::kebab(class_basename($this)));
     }
 
     /**

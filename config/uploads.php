@@ -52,6 +52,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | File names
+    |--------------------------------------------------------------------------
+    |
+    | How the stored file is named. The `strategy` is `original`, the
+    | original file name as a slug (`Foto van de gevel.JPG` becomes
+    | `foto-van-de-gevel.jpg`), or `random`, a string of lower-case letters
+    | and digits. Use `random` when public files must not be found by
+    | guessing their name. `max_length` is the longest name in characters,
+    | without the extension, and at least 8; a longer original name is cut
+    | off after the last whole word. When the name is taken in that folder,
+    | `-2`, `-3` and so on is added within the same length. The original
+    | name is always kept in the `name` column.
+    |
+    */
+
+    'file_names' => [
+        'max_length' => env('UPLOADS_FILE_NAME_MAX_LENGTH', 20),
+        'strategy' => env('UPLOADS_FILE_NAME_STRATEGY', 'original'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Download links
     |--------------------------------------------------------------------------
     |
@@ -79,16 +101,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Path prefix
+    | Storage path
     |--------------------------------------------------------------------------
     |
-    | Folder on the disk under which every upload is stored. Leave it empty
-    | to store directly in the root of the disk. Files are stored as
-    | `<prefix>/<models>/<id>/<collection>/<uuid>.<ext>`.
+    | Every upload is stored as `<path_prefix>/<path_pattern>/<file name>`.
+    | The recommended layout, and the default, is
+    | `uploads/<module>/<year>/<month>/<file>`: one folder per module that
+    | owns the file, split by the month of the upload, so no folder grows
+    | to tens of thousands of files and a backup or cleanup per period is
+    | easy. The pattern knows these placeholders:
+    |
+    | {module}      the owning model in plural (`products`), or what its
+    |               `uploadsModule()` returns; the collection without owner
+    | {id}          the key of the owning model; empty without owner
+    | {collection}  the collection, for example `photos`
+    | {year}        the year of the upload, `2026`
+    | {month}       the month of the upload, `01` to `12`
+    | {day}         the day of the upload, `01` to `31`
+    |
+    | Empty segments are left out. Set the prefix to an empty string to
+    | store directly under the pattern in the root of the disk.
     |
     */
 
-    'path_prefix' => env('UPLOADS_PATH_PREFIX', ''),
+    'path_pattern' => env('UPLOADS_PATH_PATTERN', '{module}/{year}/{month}'),
+
+    'path_prefix' => env('UPLOADS_PATH_PREFIX', 'uploads'),
 
     /*
     |--------------------------------------------------------------------------

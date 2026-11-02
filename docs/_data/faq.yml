@@ -2,7 +2,7 @@
 # Rendered on faq.md, in the FAQPage structured data and in llms.txt. Six to ten questions; more dilutes.
 - q: How do I attach a file to a model in Laravel with darvis/laravel-uploads?
   a: >-
-    Add the `HasUploads` trait to the model and call `$model->addUpload($file, 'photos', public: true, meta: ['caption' => 'Front'])`. The file is stored on the public or private disk under `products/12/photos/<uuid>.jpg`, a row is written to the `uploads` table and a queued job makes the conversions. Read them back with `$model->uploadsIn('photos')`.
+    Add the `HasUploads` trait to the model and call `$model->addUpload($file, 'photos', public: true, meta: ['caption' => 'Front'])`. The file is stored on the public or private disk under `uploads/products/2026/11/front.jpg`, a row is written to the `uploads` table and a queued job makes the conversions. Read them back with `$model->uploadsIn('photos')`.
 
 - q: What is the difference between a public and a private upload?
   a: >-

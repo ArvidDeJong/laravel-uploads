@@ -14,7 +14,7 @@ This page explains the words the rest of the documentation uses. You do not need
 
 When your code calls `$product->addUpload($file, 'photos', public: true)`, this happens:
 
-1. **The file is stored.** It goes to the public or the private *disk* (see below), in the folder `products/<id of the product>/photos/`, under a new random name such as `7131d4ec-….jpg`. The original name is kept, but not as the file name, so two files called `photo.jpg` never overwrite each other.
+1. **The file is stored.** It goes to the public or the private *disk* (see below), in the folder `uploads/products/<year>/<month>/`, under its own name made safe for a URL, such as `front.jpg`. A second `front.jpg` in the same folder becomes `front-2.jpg`, so files never overwrite each other. The name as it was uploaded is kept in the database. See [Where the files are stored](#where-the-files-are-stored).
 2. **A row is written.** The `uploads` table gets one row with everything about the file: where it is, its original name, its size and type, who uploaded it, which model and collection it belongs to, and your extra data.
 3. **A job is queued.** A *job* is a piece of work that runs after the request. This one, `ProcessUpload`, makes the smaller versions of an image (the *conversions*) and an image of every page of a PDF, and stores them next to the original.
 4. **Your page shows it.** You ask the upload for an address, `url()`, `thumbnailUrl()` or `downloadUrl()`, and put that in your HTML.
@@ -62,12 +62,51 @@ The package uses two disks:
 | Default disk | `public` | `local` |
 | Folder in a new Laravel app | `storage/app/public` | `storage/app/private` |
 | Who can open it | everyone with the address | only through a signed link, after the policy said yes |
-| Address | permanent, for example `/storage/products/1/photos/….jpg` | temporary, for example `/uploads/12?expires=…&signature=…` |
+| Address | permanent, for example `/storage/uploads/products/2026/11/….jpg` | temporary, for example `/uploads/12?expires=…&signature=…` |
 | For | product photos, a logo, images on public pages | invoices, contracts, print files, anything personal |
 
 You choose per upload with `public: true` or `public: false`. Without it, an upload is **private**, so a file is never public by accident.
 
 The public folder is only reachable from the browser after `php artisan storage:link`, which creates the link `public/storage` to `storage/app/public`. The private folder is never linked.
+
+## Where the files are stored
+
+The recommended layout, and the default, is one folder per *module*, split by year and month:
+
+```text
+uploads/<module>/<year>/<month>/<file>
+uploads/products/2026/11/front.jpg
+uploads/products/2026/11/front-thumb.webp
+```
+
+- **The module** is the kind of owner, the model name in plural: `products` for `Product`, `news-items` for `NewsItem`. An upload without owner uses its collection instead. A model can choose its own folder name:
+
+  ```php
+  class NewsItem extends Model
+  {
+      use HasUploads;
+
+      public function uploadsModule()
+      {
+          return 'news';
+      }
+  }
+  ```
+
+- **Year and month** are those of the moment the file is uploaded. No folder grows to tens of thousands of files, and you can back up or clean up one period at a time.
+- **The file name** is the original name as a slug: `Foto van de gevel.JPG` becomes `foto-van-de-gevel.jpg`. It is at most `file_names.max_length` characters, 20 by default, without the extension; a longer name is cut off after the last whole word. A name that is already taken in that folder gets `-2`, `-3` and so on. Set `file_names.strategy` to `random` for 20 random lower-case letters and digits instead, such as `k3v9x2m7q1w8r5t0y6u4.jpg`.
+
+The folder of a file is written into the `path` column when it is stored. Changing these settings later only affects new uploads; existing files stay where they are and keep working.
+
+Choose `random` when public files should not be found by guessing their name: with original names, everyone who knows a file is called `offerte.pdf` can try `/storage/uploads/products/2026/11/offerte.pdf`. Private files are only reachable through a signed link, whatever their name. Random names also rule out one rare case: two uploads of the same name into the same folder at the very same moment can pick the same original name, and the first upload then shows the second file.
+
+The folders below the prefix come from `path_pattern`. Next to `{module}`, `{year}` and `{month}` it knows `{id}`, `{collection}` and `{day}`. For uploads with an owner, the layout of version 1.0, one folder per model and collection, is:
+
+```php
+// config/uploads.php
+'path_pattern' => '{module}/{id}/{collection}',
+'path_prefix' => '',
+```
 
 ## Conversions
 

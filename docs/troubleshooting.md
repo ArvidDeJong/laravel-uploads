@@ -48,7 +48,7 @@ The migration has not run. Run `php artisan migrate`; the migration is loaded fr
 
 ### Integrity constraint violation: UNIQUE constraint failed: uploads.disk, uploads.path
 
-Two rows with the same disk and path. That only happens when you create `Upload` rows yourself with a path that already exists; let `StoreUpload` build the path, it uses a uuid.
+Two rows with the same disk and path. That only happens when you create `Upload` rows yourself with a path that already exists; let `StoreUpload` build the path, it picks a name that is free in the folder.
 
 ## Conversions
 

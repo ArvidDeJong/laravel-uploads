@@ -45,15 +45,15 @@ Add a conversion by adding a key. The job makes every conversion in the array fo
 The job writes next to the original on the same disk:
 
 ```
-products/12/photos/9f1c…-thumb.webp
-products/12/photos/9f1c…-preview.webp
+uploads/products/2026/11/front-thumb.webp
+uploads/products/2026/11/front-preview.webp
 ```
 
 A private upload keeps its conversions private, because the route `uploads.show` serves them with `?conversion=thumb`, with the same policy as the original. The paths are kept in the `conversions` column:
 
 ```php
 $upload->conversions;
-// ['thumb' => 'products/12/photos/9f1c…-thumb.webp', 'preview' => '…-preview.webp']
+// ['thumb' => 'uploads/products/2026/11/front-thumb.webp', 'preview' => '…-preview.webp']
 ```
 
 ## Showing a conversion

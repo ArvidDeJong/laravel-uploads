@@ -5,13 +5,15 @@ use Darvis\Uploads\Events\UploadProcessed;
 use Darvis\Uploads\Exceptions\PdfRenderingUnavailable;
 use Darvis\Uploads\Jobs\ProcessUpload;
 use Darvis\Uploads\Models\Upload;
+use Darvis\Uploads\Tests\Fixtures\NewsItem;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
-it('stores a public upload on the public disk under the model path', function () {
+it('stores a public upload on the public disk under the module, year and month', function () {
     Queue::fake();
+    $this->travelTo(now()->setDate(2026, 3, 14));
     $product = $this->createProduct();
 
     $upload = $product->addUpload($this->fakeImage('IMG_0001.png'), 'photos', public: true, meta: ['caption' => 'Front']);
@@ -25,7 +27,7 @@ it('stores a public upload on the public disk under the model path', function ()
         ->and($upload->size)->toBeGreaterThan(0)
         ->and($upload->meta('caption'))->toBe('Front')
         ->and($upload->uploadable)->toBeInstanceOf(get_class($product))
-        ->and($upload->path)->toMatch('#^products/'.$product->id.'/photos/[0-9a-f-]{36}\.png$#');
+        ->and($upload->path)->toBe('uploads/products/2026/03/img-0001.png');
 
     Storage::disk('public')->assertExists($upload->path);
     Queue::assertPushed(ProcessUpload::class, fn (ProcessUpload $job) => $job->upload->is($upload));
@@ -42,28 +44,117 @@ it('stores a private upload on the private disk', function () {
     Storage::disk('public')->assertMissing($upload->path);
 });
 
-it('stores an upload without an owner under the uploads folder', function () {
+it('uses the collection as module for an upload without an owner', function () {
     Queue::fake();
+    $this->travelTo(now()->setDate(2026, 11, 2));
 
     $upload = app(StoreUpload::class)->handle(UploadedFile::fake()->create('note.txt', 1), 'attachments');
 
     expect($upload->uploadable_type)->toBeNull()
-        ->and($upload->path)->toStartWith('uploads/attachments/');
-
-    config()->set('uploads.path_prefix', 'media');
-    $prefixed = app(StoreUpload::class)->handle(UploadedFile::fake()->create('note.txt', 1), 'attachments');
-
-    expect($prefixed->path)->toStartWith('media/uploads/attachments/');
+        ->and($upload->path)->toStartWith('uploads/attachments/2026/11/');
 });
 
-it('honours the path prefix for owned uploads', function () {
+it('lets the owner name its module', function () {
     Queue::fake();
+    $this->travelTo(now()->setDate(2026, 11, 2));
+    $item = NewsItem::create(['name' => 'Opening']);
+
+    $upload = $item->addUpload(UploadedFile::fake()->create('a.txt', 1));
+
+    expect($upload->path)->toStartWith('uploads/news/2026/11/');
+});
+
+it('honours the path prefix and the path pattern', function () {
+    Queue::fake();
+    $this->travelTo(now()->setDate(2026, 1, 5));
     config()->set('uploads.path_prefix', '/media/');
+    config()->set('uploads.path_pattern', '/{module}/{id}/{collection}/{year}-{month}-{day}/');
     $product = $this->createProduct();
 
-    $upload = $product->addUpload(UploadedFile::fake()->create('a.txt', 1));
+    $upload = $product->addUpload(UploadedFile::fake()->create('a.txt', 1), 'Floor plans');
 
-    expect($upload->path)->toStartWith('media/products/'.$product->id.'/files/');
+    expect($upload->path)->toStartWith('media/products/'.$product->id.'/floor-plans/2026-01-05/');
+
+    config()->set('uploads.path_prefix', '');
+    config()->set('uploads.path_pattern', '{module}/{id}/{collection}');
+    $loose = app(StoreUpload::class)->handle(UploadedFile::fake()->create('a.txt', 1), 'attachments');
+
+    expect($loose->path)->toBe('attachments/attachments/a.txt');
+});
+
+it('gives a random lower-case name of the configured length', function () {
+    Queue::fake();
+    config()->set('uploads.file_names.strategy', 'random');
+    config()->set('uploads.file_names.max_length', 12);
+    $product = $this->createProduct();
+
+    $upload = $product->addUpload(UploadedFile::fake()->create('Offerte.PDF', 1));
+
+    expect(basename($upload->path))->toMatch('/^[a-z0-9]{12}\.pdf$/')
+        ->and($upload->name)->toBe('Offerte.PDF');
+
+    config()->set('uploads.file_names.max_length', 3);
+
+    expect(basename($product->addUpload(UploadedFile::fake()->create('a.txt', 1))->path))
+        ->toMatch('/^[a-z0-9]{8}\.txt$/');
+});
+
+it('keeps the original name as a slug, cut to the maximum length', function () {
+    Queue::fake();
+    $product = $this->createProduct();
+
+    $short = $product->addUpload(UploadedFile::fake()->create('Foto gevel.JPG', 1));
+    $long = $product->addUpload(UploadedFile::fake()->create('Plattegrond begane grond versie 3.pdf', 1));
+    $foreign = $product->addUpload(UploadedFile::fake()->create('写真.png', 1));
+
+    expect(basename($short->path))->toBe('foto-gevel.jpg')
+        ->and(basename($long->path))->toBe('plattegrond-begane.pdf')
+        ->and(basename($foreign->path))->toMatch('/^[a-z0-9]{20}\.png$/')
+        ->and($short->name)->toBe('Foto gevel.JPG');
+});
+
+it('numbers an original name that is taken in the folder, with any extension or in the trash', function () {
+    Queue::fake();
+    config()->set('uploads.file_names.max_length', 10);
+    $product = $this->createProduct();
+
+    $first = $product->addUpload(UploadedFile::fake()->create('schedule.jpg', 1));
+    $other = $product->addUpload(UploadedFile::fake()->create('schedule.png', 1));
+    $first->delete();
+    $third = $product->addUpload(UploadedFile::fake()->create('schedule.jpg', 1));
+    $long = $product->addUpload(UploadedFile::fake()->create('appointments.jpg', 1));
+    $longAgain = $product->addUpload(UploadedFile::fake()->create('appointments.jpg', 1));
+
+    expect(basename($first->path))->toBe('schedule.jpg')
+        ->and(basename($other->path))->toBe('schedule-2.png')
+        ->and(basename($third->path))->toBe('schedule-3.jpg')
+        ->and(basename($long->path))->toBe('appointmen.jpg')
+        ->and(basename($longAgain->path))->toBe('appointm-2.jpg');
+
+    Storage::disk('local')->assertExists($first->path);
+});
+
+it('numbers an original name when a file of that name is already on the disk', function () {
+    Queue::fake();
+    $this->travelTo(now()->setDate(2026, 11, 2));
+    Storage::disk('local')->put('uploads/products/2026/11/legacy.pdf', 'old');
+    $product = $this->createProduct();
+
+    $upload = $product->addUpload(UploadedFile::fake()->create('legacy.pdf', 1));
+
+    expect($upload->path)->toBe('uploads/products/2026/11/legacy-2.pdf');
+    expect(Storage::disk('local')->get('uploads/products/2026/11/legacy.pdf'))->toBe('old');
+});
+
+it('never gives an original the name of a generated file', function () {
+    Queue::fake();
+    $product = $this->createProduct();
+
+    $thumb = $product->addUpload(UploadedFile::fake()->create('logo-thumb.webp', 1));
+    $page = $product->addUpload(UploadedFile::fake()->create('manual-page-2.jpg', 1));
+
+    expect(basename($thumb->path))->toBe('logo-thumb-2.webp')
+        ->and(basename($page->path))->toBe('manual-page-2-2.jpg');
 });
 
 it('records the uploader and gives each file the next sort order in its collection', function () {
